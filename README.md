@@ -1,95 +1,80 @@
 # CoolStore Monolith
 
-This repository has the complete coolstore monolith built as a Java EE 7 application. To deploy it on OpenShift Container Platform (OCP) follow the instructions below
+This repository has the complete coolstore monolith built as a Java EE 7 application. To deploy it on JBoss 7.4 follow the instructions below
 
 
 ## Pre requisite
 
-* Access to a OCP cluster using 3.5 or later.
-* OpenShift Command Client tool (eg. oc) installed locally
-* Authenticated from the command line client to the cluster
+* JBoss 7.4 zip installation
+* Keycloak v20.0.5 zip installation
+* podman or docker, tested with podman version 4.3.1
+* maven, tested with maven version 3.8.5
+* OpenJDK, tested with version 17.0.5
 
-        oc login <url>
+## Start postgres
 
+```
+podman run --name myPostgresDb \
+   -p 5432:5432 \
+   -e POSTGRES_USER=postgresUser \
+   -e POSTGRES_PASSWORD=postgresPW \
+   -e POSTGRES_DB=postgresDB \
+   -d postgres
+```
 
-## Build and deploy using the GitHub repo
-To build and deploy using the github repo there is no need to clone this repo locally. All that is required is to create a project and process and create the application according to the template. 
+## Start keycloak
 
-NOTE: A source deployment takes longer than a binary deployment
+Extract keycloak-20.0.5.zip
 
-Create a new project (or use an existing)
+```cd keycloak-20.0.5```
 
-    oc new-project coolstore
+Start keycloak in dev mode listening on port 8081
 
-Deploy and start the build
+``` ./bin/kc.sh start-dev --http-port=8081 ```
 
-    oc process -f https://raw.githubusercontent.com/coolstore/monolith/master/src/main/openshift/template.json | oc create -f -
-
-## Build and deploy using the binary deployment
-
-Clone the project to a local directory
-
-    git clone https://github.com/coolstore/monolith.git coolstore-monolith
-    cd coolstore-monolith
-
-Build the project using openshift profile 
-
-    mvn -Popenshift package
-
-Create a new project (or use an existing)
-
-    oc new-project coolstore
-
-Create the app
-
-    oc process -f src/main/openshift/template-binary.json | oc create -f -
-
-Start the build
-
-    oc start-build coolstore --from-file=deployments/ROOT.war
-    
-To deploy the production environment and Jenkins pipeline
-
-    oc process -f src/main/openshift/template-prod.json | oc create -f -
-    
-Manually start the pipeline
-
-    oc start-build monolith-pipeline
+Open http://127.0.0.1:8081 in your browser
 
 
+Set an administrator username and password, then login to keycloak using these credentials
 
-# Run standalone
+Click on the "Master" dropdown, and select "Create Realm"
 
-The application can also be deploy to a local JBoss EAP, which is great for development, but requires JMS Queues etc to be configured. The `pom.xml` does however support adding that through the `maven-wildfly-plugin`.
+Click on "Browse" and locate the file realm-export.json in this repo.
 
-## First time
+Click on "Create" to create the "eap" realm
 
-1. Download JBoss EAP 7.x from [developers.redhat.com](https://developers.redhat.com/products/eap/download/).
-1. Unzip the installation in a suitable locations (e.g. /opt)
-1. Set the JBOSS_HOME environment variable (in windows right click on my computer and add system environment variable)
+Click on "Users" and "Create new user"
 
-        export JBOSS_HOME=/opt/jboss-eap-7.0
+Enter a username, e.g. "user1" and click on "Create"
 
-1. Run the following maven command
+From the next form, click on the "Credentials" tab and "Set password"
 
-        mvn clean package wildfly:start wildfly:add-resource wildfly:deploy
+Set a password and password confirmation, and unselect "Temporary"
 
-1. Test the application by going to http://localhost:8080
-1. To stop the application run the following command
+Click on "Save" to store the password.
 
-        mvn wildfly:shutdown
+Keycloak is now configured correctly
 
-## Second time
+## Configure JBoss 7.4
 
-If you want to redeploy the application there is no need to use the `wildfly:add-resource` goal and if the JBoss is running then there is also possible to skip `wildfly:start` and just execute the following command
+Unzip jboss-eap-7.4.0.zip
 
-        mvn clean package wildfly:deploy
+``` cd jboss-eap-7.4/jboss-eap-7.4 ```
 
+Create the folder modules/org/postgresql/main
+
+``` mkdir -p modules/org/postgresql/main ```
+Start jboss eap in full mode
+
+
+Download the postgres jdbc driver from https://jdbc.postgresql.org/download/  e.g. https://jdbc.postgresql.org/download/postgresql-42.5.4.jar
 
  Copy postgres jar file to modules/org/postgresql/main
 
-create module.xml
+create module.xml  -- ensure the filename matches the filename downloaded in the previous step
 
+```
+cat <<EOF > modules/org/postgresql/main/module.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <module xmlns="urn:jboss:module:1.0" name="org.postgresql">
  <resources>
@@ -100,18 +85,49 @@ create module.xml
  <module name="javax.transaction.api"/>
  </dependencies>
 </module>
+EOF
+```
 
-Edit your standalone.xml and add the following code between the tags <datasources><drivers>
- <driver name="postgresql" module="org.postgresql">
- <xa-datasource-class>
- org.postgresql.xa.PGXADataSource
- </xa-datasource-class>
- </driver>
 
+Start JBoss EAP 7.4 in full mode
+
+``` ./bin/standalone.sh -c standalone-full.xml ```
+
+In another terminal, start the jboss cli, from the jboss7.4 installation folder run 
+
+```  ./bin/jboss-cli.sh --connect ```
+
+Run the following commands:
+
+```
+/subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql,driver-module-name=org.postgresql)
+```
+
+```
  data-source add --name=CoolstoreDS --jndi-name=java:jboss/datasources/CoolstoreDS --driver-name=postgresql --connection-url=jdbc:postgresql://127.0.0.1:5432/postgresDB --user-name=postgresUser --password=postgresPW
+ ```
 
+```
 jms-topic add --topic-address=topic.orders --entries=topic/orders
+```
 
+## Build and deploy the application
 
+From the root of this repo, run `mvn package`
 
+Set the JBOSS_HOME env variable e.g. `export JBOSS_HOME=~/jboss-eap-7.4/jboss-eap-7.4`
+
+Run the jboss cli ` $JBOSS_HOME/bin/jboss-cli.sh`
+
+Run the following command to deploy the application `deploy ./target/ROOT.war`
+
+Navigate to http://127.0.0.1:8080
+
+![coolstore](assets/coolstore.png "coolstore")
+
+From the coostore, click on "Sign in" in the top right
+
+Login with the user credentials created on Keycloak, e.g. user1
+
+You should now be able to complete the checkout process.
 

@@ -64,7 +64,6 @@ Unzip jboss-eap-7.4.0.zip
 Create the folder modules/org/postgresql/main
 
 ``` mkdir -p modules/org/postgresql/main ```
-Start jboss eap in full mode
 
 
 Download the postgres jdbc driver from https://jdbc.postgresql.org/download/  e.g. https://jdbc.postgresql.org/download/postgresql-42.5.4.jar

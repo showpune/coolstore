@@ -11,7 +11,7 @@ This repository has the complete coolstore monolith built as a Java EE 7 applica
 * maven, tested with maven version 3.8.5
 * OpenJDK, tested with version 17.0.5
 
-## Start postgres
+## Start a postgreSQL database
 
 ```
 podman run --name myPostgresDb \
@@ -88,9 +88,11 @@ EOF
 ```
 
 
-Start JBoss EAP 7.4 in full ha mode
+Start JBoss EAP 7.4 in full high availability mode
 
-``` ./bin/standalone.sh -c standalone-full-ha.xml ```
+From the jboss-eap-7.4 folder run:
+
+```./jboss-eap-7.4-2/bin/standalone.sh -c standalone-full-ha.xml  -Djboss.node.name=node1 ```
 
 In another terminal, start the jboss cli, from the jboss7.4 installation folder run 
 
@@ -152,7 +154,7 @@ From the jboss-eap-7.4 folder run:
 
 `./jboss-eap-7.4-2/bin/standalone.sh -c standalone-full-ha.xml -Djboss.socket.binding.port-offset=100  -Djboss.node.name=node2`
 
-## monitor the logs
+## Monitor the logs
 
 Open up two terminals in the jboss-eap-7.4 folder
 

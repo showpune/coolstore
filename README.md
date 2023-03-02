@@ -88,9 +88,9 @@ EOF
 ```
 
 
-Start JBoss EAP 7.4 in full mode
+Start JBoss EAP 7.4 in full ha mode
 
-``` ./bin/standalone.sh -c standalone-full.xml ```
+``` ./bin/standalone.sh -c standalone-full-ha.xml ```
 
 In another terminal, start the jboss cli, from the jboss7.4 installation folder run 
 
@@ -108,17 +108,27 @@ Run the following commands:
 
 ```
 jms-topic add --topic-address=topic.orders --entries=topic/orders
+
+/subsystem=messaging-activemq/server=default:write-attribute(name=cluster-password, value=password)
 ```
 
 ## Build and deploy the application
 
-From the root of this repo, run `mvn package`
+From the root of this repo, run: 
 
-Set the JBOSS_HOME env variable e.g. `export JBOSS_HOME=~/jboss-eap-7.4/jboss-eap-7.4`
+`mvn package`
 
-Run the jboss cli ` $JBOSS_HOME/bin/jboss-cli.sh`
+Set the JBOSS_HOME env variable e.g. 
 
-Run the following command to deploy the application `deploy ./target/ROOT.war`
+`export JBOSS_HOME=~/jboss-eap-7.4/jboss-eap-7.4`
+
+Run the jboss cli: 
+
+` $JBOSS_HOME/bin/jboss-cli.sh`
+
+Run the following command to deploy the application:
+
+ `deploy ./target/ROOT.war`
 
 Navigate to http://127.0.0.1:8080
 
@@ -130,3 +140,41 @@ Login with the user credentials created on Keycloak, e.g. user1
 
 You should now be able to complete the checkout process.
 
+## Start a second instance.
+
+Make a copy of the jboss-eap-7.4/jboss-eap-7.4 e.g jboss-eap-7.4/jboss-eap-7.4-2
+
+Within the jboss-eap-7.4 folder you should now see jboss-eap-7.4 and jboss-eap-7.4-2
+
+In the jboss-eap-7.4-2, remove the contents of standalone/data/activemq
+
+From the jboss-eap-7.4 folder run:
+
+`./jboss-eap-7.4-2/bin/standalone.sh -c standalone-full-ha.xml -Djboss.socket.binding.port-offset=100  -Djboss.node.name=node2`
+
+## monitor the logs
+
+Open up two terminals in the jboss-eap-7.4 folder
+
+Run:
+
+`tail -f jboss-eap-7.4/standalone/log/server.log` 
+
+in one terminal and 
+
+`tail -f jboss-eap-7.4-2/standalone/log/server.log` 
+
+in the other
+
+## Testing clustering
+
+If you perform a test checkout of an item, you should see both nodes processing the messages in the logs e.g.
+
+```
+2023-03-02 14:41:23,131 INFO  [stdout] (Thread-3 (ActiveMQ-client-global-threads)) 
+2023-03-02 14:41:23,131 INFO  [stdout] (Thread-3 (ActiveMQ-client-global-threads)) Message recd !
+2023-03-02 14:41:23,131 INFO  [stdout] (Thread-3 (ActiveMQ-client-global-threads)) Received order: {"orderValue":10.49,"customerName":"Karl Svensson","customerEmail":"karl@gmail.com","retailPrice":10.0,"discount":-2.5,"shippingFee":2.99,"shippingDiscount":0.0,"items":[{"productSku":"329299","quantity":1}]}
+2023-03-02 14:41:23,132 INFO  [stdout] (Thread-3 (ActiveMQ-client-global-threads)) Order object is Order [orderId=0, customerName=Karl Svensson, customerEmail=karl@gmail.com, orderValue=10.49, retailPrice=10.0, discount=-2.5, shippingFee=2.99, shippingDiscount=0.0, itemList=[OrderItem [productId=329299, quantity=1]]]
+
+
+```

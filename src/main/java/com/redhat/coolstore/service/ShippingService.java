@@ -1,11 +1,13 @@
 package com.redhat.coolstore.service;
 
+import javax.ejb.Remote;
 import javax.ejb.Stateless;
 
 import com.redhat.coolstore.model.ShoppingCart;
 
 @Stateless
-public class ShippingService {
+@Remote
+public class ShippingService implements ShippingServiceRemote {
 
     public void calculateShipping(ShoppingCart sc) {
 

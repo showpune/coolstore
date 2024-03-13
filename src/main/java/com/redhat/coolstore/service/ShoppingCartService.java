@@ -69,7 +69,7 @@ public class ShoppingCartService  {
 
                 }
 
-                lookupShippingServiceRemote().calculateShipping(sc);
+                sc.setShippingTotal(lookupShippingServiceRemote().calculateShipping(sc));
 
             }
 

@@ -71,6 +71,11 @@ public class ShoppingCartService  {
 
                 sc.setShippingTotal(lookupShippingServiceRemote().calculateShipping(sc));
 
+                if (sc.getCartItemTotal() >= 25) {
+                    sc.setShippingTotal(sc.getShippingTotal()
+                            + lookupShippingServiceRemote().calculateShippingInsurance(sc));
+                }
+
             }
 
             ps.applyShippingPromotions(sc);

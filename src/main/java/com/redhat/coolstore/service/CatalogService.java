@@ -11,7 +11,6 @@ import javax.persistence.criteria.Root;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import com.redhat.coolstore.model.*;
 
@@ -21,7 +20,7 @@ public class CatalogService {
     @Inject
     Logger log;
 
-    @PersistenceContext
+    @Inject
     private EntityManager em;
 
     public CatalogService() {

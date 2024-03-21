@@ -1,34 +1,82 @@
 package com.redhat.coolstore.model;
 
-/**
- * Created by tqvarnst on 2017-03-30.
- */
-public interface Product {
-    String getItemId();
+import java.io.Serializable;
 
-    void setItemId(String itemId);
+public class Product implements Serializable {
 
-    String getName();
+    private static final long serialVersionUID = 7526472295622723147L;
 
-    void setName(String name);
+    private String itemId;
 
-    String getDesc();
+    private String name;
 
-    void setDesc(String desc);
+    private String desc;
 
-    double getPrice();
+    private double price;
 
-    void setPrice(double price);
+    private String location;
 
-    String getLocation();
+    private int quantity;
 
-    void setLocation(String location);
+    private String link;
 
-    int getQuantity();
 
-    void setQuantity(int quantity);
+    public Product() {
+    }
 
-    String getLink();
+    public String getItemId() {
+        return itemId;
+    }
 
-    void setLink(String link);
+    public void setItemId(String itemId) {
+        this.itemId = itemId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public String getLink() {
+        return link;
+    }
+
+    public void setLink(String link) {
+        this.link = link;
+    }
 }

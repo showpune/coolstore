@@ -4,7 +4,6 @@ import com.redhat.coolstore.model.CatalogItemEntity;
 import com.redhat.coolstore.model.Order;
 import com.redhat.coolstore.model.OrderItem;
 import com.redhat.coolstore.model.Product;
-import com.redhat.coolstore.model.ProductImpl;
 import com.redhat.coolstore.model.ShoppingCart;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -31,7 +30,7 @@ public class Transformers {
     private static Logger log = Logger.getLogger(Transformers.class.getName());
 
     public static Product toProduct(CatalogItemEntity entity) {
-        ProductImpl prod = new ProductImpl();
+        Product prod = new Product();
         prod.setItemId(entity.getItemId());
         prod.setName(entity.getName());
         prod.setDesc(entity.getDesc());

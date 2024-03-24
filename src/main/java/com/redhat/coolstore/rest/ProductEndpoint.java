@@ -1,12 +1,21 @@
-package com.redhat.coolstore.rest;
+// Update the import statements
+import org.eclipse.microprofile.jwt.Claim;
+import org.eclipse.microprofile.jwt.Jwt;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Produces;
 
-import java.io.Serializable;
+// Update the package name
+package com.redhat.coolstore.rest.product;
+
+// Update the ProductEndpoint class
 import java.util.List;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.Optional;
 
 import com.redhat.coolstore.model.Product;
 import com.redhat.coolstore.service.ProductService;
@@ -15,7 +24,7 @@ import com.redhat.coolstore.service.ProductService;
 @Path("/products")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public class ProductEndpoint implements Serializable {
+public class ProductEndpoint {
 
     /**
      *
@@ -25,17 +34,39 @@ public class ProductEndpoint implements Serializable {
     @Inject
     private ProductService pm;
 
-
+    // Update the listAll method
     @GET
     @Path("/")
     public List<Product> listAll() {
-        return pm.getProducts();
+        return pm.getProducts().stream()
+            .map(p -> new Product(p.getId(), p.getName(), p.getDescription()))
+            .collect(Collectors.toList());
     }
 
+    // Update the getProduct method
     @GET
     @Path("/{itemId}")
-    public Product getProduct(@PathParam("itemId") String itemId) {
-        return pm.getProductByItemId(itemId);
+    public Optional<Product> getProduct(@PathParam("itemId") String itemId) {
+        return pm.getProductByItemId(itemId)
+            .map(p -> new Product(p.getId(), p.getName(), p.getDescription()));
     }
 
+    // Extract the getProductByItemId method into a separate utility class
+    public class ProductById {
+
+        private final ProductService pm;
+
+        public ProductById(ProductService pm) {
+            this.pm = pm;
+        }
+
+        @Inject
+        public ProductById() {
+            // Empty constructor for CDI injection
+        }
+
+        public Optional<Product> getProductById(String itemId) {
+            return pm.getProductByItemId(itemId);
+        }
+    }
 }

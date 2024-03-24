@@ -1,42 +1,34 @@
-package com.redhat.coolstore.rest;
+// Update the import statements
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 
-import java.io.Serializable;
-import java.util.List;
+// Update the `Order` and `OrderService` classes
+import model.Order;
+import service.OrderService;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+// Update the `OrderEndpoint` class
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
-import com.redhat.coolstore.model.Order;
-import com.redhat.coolstore.service.OrderService;
-
-@RequestScoped
 @Path("/orders")
-@Consumes(MediaType.APPLICATION_JSON)
-@Produces(MediaType.APPLICATION_JSON)
-public class OrderEndpoint implements Serializable {
+public class OrderEndpoint {
 
     private static final long serialVersionUID = -7227732980791688774L;
 
     @Inject
-    private OrderService os;
-
+    private OrderService orderService;
 
     @GET
     @Path("/")
     public List<Order> listAll() {
-        return os.getOrders();
+        return orderService.getOrders();
     }
 
     @GET
     @Path("/{orderId}")
     public Order getOrder(@PathParam("orderId") long orderId) {
-        return os.getOrderById(orderId);
+        return orderService.getOrderById(orderId);
     }
-
 }

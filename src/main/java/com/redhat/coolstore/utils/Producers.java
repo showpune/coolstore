@@ -1,17 +1,27 @@
-package com.redhat.coolstore.utils;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Any;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.InjectionPoint;
-import java.util.logging.Logger;
+import static jakarta.enterprise.inject.spi.InjectionPoint.get;
 
-
+@Dependent
 public class Producers {
 
-    Logger log = Logger.getLogger(Producers.class.getName());
-
-    @Produces
-    public Logger produceLog(InjectionPoint injectionPoint) {
-        return Logger.getLogger(injectionPoint.getMember().getDeclaringClass().getName());
+    @Inject
+    public Producers() {
     }
 
+    @Produces
+    @Any
+    public Logger produceLog() {
+        return LoggerFactory.getLogger(getCurrentClass().getName());
+    }
+
+    @Inject
+    public void configureLogging(@Named("logger") Logger logger) {
+        // Add custom logging configuration here
+    }
 }

@@ -1,117 +1,44 @@
-package com.redhat.coolstore.service;
-
-import java.util.Hashtable;
-import java.util.logging.Logger;
-
-import javax.ejb.Stateful;
-import javax.inject.Inject;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-
-import com.redhat.coolstore.model.Product;
-import com.redhat.coolstore.model.ShoppingCart;
-import com.redhat.coolstore.model.ShoppingCartItem;
-
-@Stateful
-public class ShoppingCartService  {
+@QuarkusApplicationScoped
+public class ShoppingCartService {
 
     @Inject
-    Logger log;
+    private Logger log;
 
     @Inject
-    ProductService productServices;
+    private ProductService productServices;
 
     @Inject
-    PromoService ps;
-
+    private PromoService ps;
 
     @Inject
-    ShoppingCartOrderProcessor shoppingCartOrderProcessor;
+    private ShoppingCartOrderProcessor shoppingCartOrderProcessor;
 
-    private ShoppingCart cart  = new ShoppingCart(); //Each user can have multiple shopping carts (tabbed browsing)
+    private ShoppingCart cart = new ShoppingCart();
 
-   
-
-    public ShoppingCartService() {
-    }
-
+    @Getter
     public ShoppingCart getShoppingCart(String cartId) {
         return cart;
     }
 
-    public ShoppingCart checkOutShoppingCart(String cartId) {
+    @PostConstruct
+    public void init() {
+        this.cart = new ShoppingCart();
+    }
+
+    @Getter
+    public void checkoutShoppingCart(String cartId) {
         ShoppingCart cart = this.getShoppingCart(cartId);
-      
-        log.info("Sending  order: ");
+
+        log.info("Sending order: ");
         shoppingCartOrderProcessor.process(cart);
-   
+
         cart.resetShoppingCartItemList();
         priceShoppingCart(cart);
-        return cart;
     }
 
-    public void priceShoppingCart(ShoppingCart sc) {
-
-        if (sc != null) {
-
-            initShoppingCartForPricing(sc);
-
-            if (sc.getShoppingCartItemList() != null && sc.getShoppingCartItemList().size() > 0) {
-
-                ps.applyCartItemPromotions(sc);
-
-                for (ShoppingCartItem sci : sc.getShoppingCartItemList()) {
-
-                    sc.setCartItemPromoSavings(
-                            sc.getCartItemPromoSavings() + sci.getPromoSavings() * sci.getQuantity());
-                    sc.setCartItemTotal(sc.getCartItemTotal() + sci.getPrice() * sci.getQuantity());
-
-                }
-
-                sc.setShippingTotal(lookupShippingServiceRemote().calculateShipping(sc));
-
-                if (sc.getCartItemTotal() >= 25) {
-                    sc.setShippingTotal(sc.getShippingTotal()
-                            + lookupShippingServiceRemote().calculateShippingInsurance(sc));
-                }
-
-            }
-
-            ps.applyShippingPromotions(sc);
-
-            sc.setCartTotal(sc.getCartItemTotal() + sc.getShippingTotal());
-
-        }
-
-    }
-
-    private void initShoppingCartForPricing(ShoppingCart sc) {
-
-        sc.setCartItemTotal(0);
-        sc.setCartItemPromoSavings(0);
-        sc.setShippingTotal(0);
-        sc.setShippingPromoSavings(0);
-        sc.setCartTotal(0);
-
-        for (ShoppingCartItem sci : sc.getShoppingCartItemList()) {
-            Product p = getProduct(sci.getProduct().getItemId());
-            //if product exist
-            if (p != null) {
-                sci.setProduct(p);
-                sci.setPrice(p.getPrice());
-            }
-
-            sci.setPromoSavings(0);
-        }
-
-    }
-
-    public Product getProduct(String itemId) {
-        return productServices.getProductByItemId(itemId);
-    }
-
-	private static ShippingServiceRemote lookupShippingServiceRemote() {
+    @Inject
+    @Provides
+    public ShippingServiceRemote shippingServiceRemote() {
         try {
             final Hashtable<String, String> jndiProperties = new Hashtable<>();
             jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
@@ -122,5 +49,73 @@ public class ShoppingCartService  {
         } catch (NamingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Inject
+    @Autowired
+    public void setProductServices(ProductService productServices) {
+        this.productServices = productServices;
+    }
+
+    @Inject
+    @Autowired
+    public void setPromoService(PromoService ps) {
+        this.ps = ps;
+    }
+
+    @Inject
+    @Autowired
+    public void setShoppingCartOrderProcessor(ShoppingCartOrderProcessor shoppingCartOrderProcessor) {
+        this.shoppingCartOrderProcessor = shoppingCartOrderProcessor;
+    }
+
+    @Inject
+    @Autowired
+    public void setLogger(Logger log) {
+        this.log = log;
+    }
+
+    public void priceShoppingCart(ShoppingCart sc) {
+        if (sc != null) {
+            initShoppingCartForPricing(sc);
+
+            if (sc.getShoppingCartItemList() != null && sc.getShoppingCartItemList().size() > 0) {
+                ps.applyCartItemPromotions(sc);
+
+                for (ShoppingCartItem sci : sc.getShoppingCartItemList()) {
+                    sc.setCartItemPromoSavings(sc.getCartItemPromoSavings() + sci.getPromoSavings() * sci.getQuantity());
+                    sc.setCartItemTotal(sc.getCartItemTotal() + sci.getPrice() * sci.getQuantity());
+                }
+
+                sc.setShippingTotal(shippingServiceRemote().calculateShipping(sc));
+
+                if (sc.getCartItemTotal() >= 25) {
+                    sc.setShippingTotal(sc.getShippingTotal() + shippingServiceRemote().calculateShippingInsurance(sc));
+                }
+            }
+
+            ps.applyShippingPromotions(sc);
+
+            sc.setCartTotal(sc.getCartItemTotal() + sc.getShippingTotal());
+        }
+    }
+
+    private void initShoppingCartForPricing(ShoppingCart sc) {
+        sc.setCartItemTotal(0);
+        sc.setCartItemPromoSavings(0);
+        sc.setShippingTotal(0);
+        sc.setShippingPromoSavings(0);
+        sc.setCartTotal(0);
+
+        for (ShoppingCartItem sci : sc.getShoppingCartItemList()) {
+            Product p = productServices.getProductByItemId(sci.getProduct().getItemId());
+            sci.setProduct(p);
+            sci.setPrice(p.getPrice());
+            sci.setPromoSavings(0);
+        }
+    }
+
+    public Product getProduct(String itemId) {
+        return productServices.getProductByItemId(itemId);
     }
 }

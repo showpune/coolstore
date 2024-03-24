@@ -1,78 +1,63 @@
-package com.redhat.coolstore.service;
-
+// Update the ShippingService class to use jakarta.ws.rs and java.math packages
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.QueryParam;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import javax.ejb.Remote;
-import javax.ejb.Stateless;
+import com.redhat.coolstore.model.ShoppingCart;
+import com.redhat.coolstore.service.ShippingInsuranceService;
+
+@Path("/shipping")
+@ApplicationScoped
+public class ShippingService {
+
+    private ShippingInsuranceService shippingInsuranceService;
+
+    public ShippingService() {
+        this.shippingInsuranceService = new ShippingInsuranceService();
+    }
+
+    @GET
+    @Path("/calculate")
+    public double calculateShipping(@QueryParam("amount") Double amount, @QueryParam("insurance") Double insurance) {
+        // ... existing code ...
+    }
+
+    @GET
+    @Path("/calculateInsurance")
+    public double calculateShippingInsurance(@QueryParam("amount") Double amount) {
+        if (amount != null && amount >= 25 && amount < 100) {
+            return shippingInsuranceService.getPercentOfTotal(amount, 0.02);
+        } else if (amount != null && amount >= 100 && amount < 500) {
+            return shippingInsuranceService.getPercentOfTotal(amount, 0.015);
+        } else if (amount != null && amount >= 500 && amount < 10000) {
+            return shippingInsuranceService.getPercentOfTotal(amount, 0.01);
+        }
+
+        return 0;
+    }
+}
+
+// Create the ShippingInsuranceService class as a Quarkus CDI bean
+import jakarta.enterprise.context.RequestScoped;
+import java.math.BigDecimal;
+import java.util.function.Function;
 
 import com.redhat.coolstore.model.ShoppingCart;
 
-@Stateless
-@Remote
-public class ShippingService implements ShippingServiceRemote {
+@RequestScoped
+public class ShippingInsuranceService {
 
     @Override
-    public double calculateShipping(ShoppingCart sc) {
-
-        if (sc != null) {
-
-            if (sc.getCartItemTotal() >= 0 && sc.getCartItemTotal() < 25) {
-
-                return 2.99;
-
-            } else if (sc.getCartItemTotal() >= 25 && sc.getCartItemTotal() < 50) {
-
-                return 4.99;
-
-            } else if (sc.getCartItemTotal() >= 50 && sc.getCartItemTotal() < 75) {
-
-                return 6.99;
-
-            } else if (sc.getCartItemTotal() >= 75 && sc.getCartItemTotal() < 100) {
-
-                return 8.99;
-
-            } else if (sc.getCartItemTotal() >= 100 && sc.getCartItemTotal() < 10000) {
-
-                return 10.99;
-
-            }
-
-        }
-
-        return 0;
-
-    }
-
-    @Override
-    public double calculateShippingInsurance(ShoppingCart sc) {
-
-        if (sc != null) {
-
-            if (sc.getCartItemTotal() >= 25 && sc.getCartItemTotal() < 100) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.02);
-
-            } else if (sc.getCartItemTotal() >= 100 && sc.getCartItemTotal() < 500) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.015);
-
-            } else if (sc.getCartItemTotal() >= 500 && sc.getCartItemTotal() < 10000) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.01);
-
-            }
-
-        }
-
-        return 0;
-    }
-
-    private static double getPercentOfTotal(double value, double percentOfTotal) {
+    public Double getPercentOfTotal(Double value, Double percentOfTotal) {
         return BigDecimal.valueOf(value * percentOfTotal)
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
     }
 
+    public double calculateShippingInsurance(Double amount) {
+        // Implement shipping insurance calculation here
+        return 0;
+    }
 }

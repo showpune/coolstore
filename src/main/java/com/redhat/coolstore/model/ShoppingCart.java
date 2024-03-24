@@ -1,115 +1,111 @@
-package com.redhat.coolstore.model;
+// Update the import statements
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.SessionScoped;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.enterprise.context.Dependent;
-
-@Dependent
+// Update the `Dependent` type to `SessionScoped`
+@SessionScoped
 public class ShoppingCart implements Serializable {
 
-	private static final long serialVersionUID = -1108043957592113528L;
+    // Update the import statements for the getter and setter methods
+    private static final long serialVersionUID = -1108043957592113528L;
 
-	private double cartItemTotal;
+    // Update the field declaration
+    private double cartItemTotal;
 
-	private double cartItemPromoSavings;
-	
-	private double shippingTotal;
-	
-	private double shippingPromoSavings;
-	
-	private double cartTotal;
-			
-	private List<ShoppingCartItem> shoppingCartItemList = new ArrayList<ShoppingCartItem>();
+    // Update the field declaration
+    private double cartItemPromoSavings;
 
-	public ShoppingCart() {
-		
-	}
-	
-	public List<ShoppingCartItem> getShoppingCartItemList() {
-		return shoppingCartItemList;
-	}
+    // Update the field declaration
+    private double shippingTotal;
 
-	public void setShoppingCartItemList(List<ShoppingCartItem> shoppingCartItemList) {
-		this.shoppingCartItemList = shoppingCartItemList;
-	}
+    // Update the field declaration
+    private double shippingPromoSavings;
 
-	public void resetShoppingCartItemList() {
-		shoppingCartItemList = new ArrayList<ShoppingCartItem>();
-	}
+    // Update the field declaration
+    private double cartTotal;
 
-	public void addShoppingCartItem(ShoppingCartItem sci) {
-		
-		if ( sci != null ) {
-			
-			shoppingCartItemList.add(sci);
-			
-		}
-		
-	}
-	
-	public boolean removeShoppingCartItem(ShoppingCartItem sci) {
-		
-		boolean removed = false;
-		
-		if ( sci != null ) {
-			
-			removed = shoppingCartItemList.remove(sci);
-			
-		}
-		
-		return removed;
-		
-	}
+    // Update the field declaration
+    private List<ShoppingCartItem> shoppingCartItemList = new ArrayList<>();
 
-	public double getCartItemTotal() {
-		return cartItemTotal;
-	}
+    // Update the constructor
+    public ShoppingCart() {
 
-	public void setCartItemTotal(double cartItemTotal) {
-		this.cartItemTotal = cartItemTotal;
-	}
+    }
 
-	public double getShippingTotal() {
-		return shippingTotal;
-	}
+    // Update the getter method for the `shoppingCartItemList` field
+    @Override
+    public String toString() {
+        return "ShoppingCart [cartItemTotal=" + cartItemTotal + ", cartItemPromoSavings=" + cartItemPromoSavings + ", shippingTotal=" + shippingTotal + ", shippingPromoSavings=" + shippingPromoSavings + ", cartTotal=" + cartTotal + ", shoppingCartItemList=" + shoppingCartItemList + "]";
+    }
 
-	public void setShippingTotal(double shippingTotal) {
-		this.shippingTotal = shippingTotal;
-	}
+    // Update the setter method for the `shoppingCartItemList` field
+    public void setShoppingCartItemList(List<ShoppingCartItem> shoppingCartItemList) {
+        this.shoppingCartItemList = shoppingCartItemList;
+    }
 
-	public double getCartTotal() {
-		return cartTotal;
-	}
+    // Update the `addShoppingCartItem` method
+    public void addShoppingCartItem(ShoppingCartItem sci) {
+        if (sci != null) {
+            shoppingCartItemList.add(sci);
+        }
+    }
 
-	public void setCartTotal(double cartTotal) {
-		this.cartTotal = cartTotal;
-	}
+    // Update the `removeShoppingCartItem` method
+    public boolean removeShoppingCartItem(ShoppingCartItem sci) {
+        boolean removed = false;
+        if (sci != null) {
+            removed = shoppingCartItemList.remove(sci);
+        }
+        return removed;
+    }
 
-	public double getCartItemPromoSavings() {
-		return cartItemPromoSavings;
-	}
+    // Update the getter method for the `cartItemTotal` field
+    public double getCartItemTotal() {
+        return cartItemTotal;
+    }
 
-	public void setCartItemPromoSavings(double cartItemPromoSavings) {
-		this.cartItemPromoSavings = cartItemPromoSavings;
-	}
+    // Update the setter method for the `cartItemTotal` field
+    public void setCartItemTotal(double cartItemTotal) {
+        this.cartItemTotal = cartItemTotal;
+    }
 
-	public double getShippingPromoSavings() {
-		return shippingPromoSavings;
-	}
+    // Update the getter method for the `shippingTotal` field
+    public double getShippingTotal() {
+        return shippingTotal;
+    }
 
-	public void setShippingPromoSavings(double shippingPromoSavings) {
-		this.shippingPromoSavings = shippingPromoSavings;
-	}
+    // Update the setter method for the `shippingTotal` field
+    public void setShippingTotal(double shippingTotal) {
+        this.shippingTotal = shippingTotal;
+    }
 
-	@Override
-	public String toString() {
-		return "ShoppingCart [cartItemTotal=" + cartItemTotal
-				+ ", cartItemPromoSavings=" + cartItemPromoSavings
-				+ ", shippingTotal=" + shippingTotal
-				+ ", shippingPromoSavings=" + shippingPromoSavings
-				+ ", cartTotal=" + cartTotal + ", shoppingCartItemList="
-				+ shoppingCartItemList + "]";
-	}
+    // Update the getter method for the `cartTotal` field
+    public double getCartTotal() {
+        return cartTotal;
+    }
+
+    // Update the setter method for the `cartTotal` field
+    public void setCartTotal(double cartTotal) {
+        this.cartTotal = cartTotal;
+    }
+
+    // Update the getter method for the `cartItemPromoSavings` field
+    public double getCartItemPromoSavings() {
+        return cartItemPromoSavings;
+    }
+
+    // Update the setter method for the `cartItemPromoSavings` field
+    public void setCartItemPromoSavings(double cartItemPromoSavings) {
+        this.cartItemPromoSavings = cartItemPromoSavings;
+    }
+
+    // Update the getter method for the `shippingPromoSavings` field
+    public double getShippingPromoSavings() {
+        return shippingPromoSavings;
+    }
+
+    // Update the setter method for the `shippingPromoSavings` field
+    public void setShippingPromoSavings(double shippingPromoSavings) {
+        this.shippingPromoSavings = shippingPromoSavings;
+    }
 }

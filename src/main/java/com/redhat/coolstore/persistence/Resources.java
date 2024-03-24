@@ -1,18 +1,13 @@
-package com.redhat.coolstore.persistence;
+// Add @Path and @GET annotations to inject the ExtendedContext bean into the UserResource class
+@Path("/users")
+@Produces
+public class UserResource {
 
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Produces;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+    @Inject
+    private ExtendedContext extendedContext;
 
-@Dependent
-public class Resources {
-
-    @PersistenceContext
-    private EntityManager em;
-
-    @Produces
-    public EntityManager getEntityManager() {
-        return em;
+    @GET
+    public Response getUsers() {
+        // ...
     }
 }

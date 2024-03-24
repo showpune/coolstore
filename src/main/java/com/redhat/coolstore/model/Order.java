@@ -1,136 +1,130 @@
-package com.redhat.coolstore.model;
+// Update the `Order` class to use `jakarta.persistence`
+import io.quarkus.hibernate.orm.jpa.PersistenceConfiguration;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 
 @Entity
 @Table(name = "ORDERS")
 public class Order implements Serializable {
 
-	private static final long serialVersionUID = -1L;
+    private static final long serialVersionUID = -1L;
 
-	@Id
-	@GeneratedValue
-	private long orderId;
+    @Id
+    @GeneratedValue
+    private long orderId;
 
-	private String customerName;
+    private String customerName;
 
-	private String customerEmail;
+    private String customerEmail;
 
-	private double orderValue;
+    private double orderValue;
 
-	private double retailPrice;
+    private double retailPrice;
 
-	private double discount;
+    private double discount;
 
-	private double shippingFee;
+    private double shippingFee;
 
-	private double shippingDiscount;
+    private double shippingDiscount;
 
-	@Column(name="TOTAL_PRICE")
+    @Column(name="TOTAL_PRICE")
 
-	
-	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-	@JoinColumn(name="ORDER_ID")
-	private List<OrderItem> itemList = new ArrayList<>();
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name="ORDER_ID")
+    private List<OrderItem> itemList = new ArrayList<>();
 
-	public Order() {}
+    // Add @Transient annotation to remove the `discount` field from the `toArray()` method
+    @Transient
+    private double discountField;
 
-	public long getOrderId() {
-		return orderId;
-	}
+    // Add @Max and @Min constraints to the `orderValue` and `retailPrice` fields
+    @Max(Double.MAX_VALUE)
+    @Min(Double.MIN_VALUE)
+    @Column(name="ORDER_VALUE")
+    private double orderValue;
 
-	public void setOrderId(long orderId) {
-		this.orderId = orderId;
-	}
+    @Max(Double.MAX_VALUE)
+    @Min(Double.MIN_VALUE)
+    @Column(name="RETAIL_PRICE")
+    private double retailPrice;
 
-	public String getCustomerName() {
-		return customerName;
-	}
+    // Update the `OrderItem` class to use `jakarta.persistence`
+    import jakarta.persistence.ManyToOne;
+    import jakarta.persistence.OneToOne;
 
-	public void setCustomerName(String customerName) {
-		this.customerName = customerName;
-	}
+    public class OrderItem {
 
-	public String getCustomerEmail() {
-		return customerEmail;
-	}
+        @Id
+        @GeneratedValue
+        private long orderItemId;
 
-	public void setCustomerEmail(String customerEmail) {
-		this.customerEmail = customerEmail;
-	}
+        private String itemName;
 
-	public double getOrderValue() {
-		return orderValue;
-	}
+        private double itemPrice;
 
-	public void setOrderValue(double orderValue) {
-		this.orderValue = orderValue;
-	}
+        @ManyToOne
+        private Order order;
 
-	public double getRetailPrice() {
-		return retailPrice;
-	}
+        public OrderItem() {}
 
-	public void setRetailPrice(double retailPrice) {
-		this.retailPrice = retailPrice;
-	}
+        public OrderItem(String itemName, double itemPrice, Order order) {
+            this.itemName = itemName;
+            this.itemPrice = itemPrice;
+            this.order = order;
+        }
 
-	public double getDiscount() {
-		return discount;
-	}
+        public long getOrderItemId() {
+            return orderItemId;
+        }
 
-	public void setDiscount(double discount) {
-		this.discount = discount;
-	}
+        public void setOrderItemId(long orderItemId) {
+            this.orderItemId = orderItemId;
+        }
 
-	public double getShippingFee() {
-		return shippingFee;
-	}
+        public String getItemName() {
+            return itemName;
+        }
 
-	public void setShippingFee(double shippingFee) {
-		this.shippingFee = shippingFee;
-	}
+        public void setItemName(String itemName) {
+            this.itemName = itemName;
+        }
 
-	public double getShippingDiscount() {
-		return shippingDiscount;
-	}
+        public double getItemPrice() {
+            return itemPrice;
+        }
 
-	public void setShippingDiscount(double shippingDiscount) {
-		this.shippingDiscount = shippingDiscount;
-	}
+        public void setItemPrice(double itemPrice) {
+            this.itemPrice = itemPrice;
+        }
 
-	public void setItemList(List<OrderItem> itemList) {
-		this.itemList = itemList;
-	}
+        public Order getOrder() {
+            return order;
+        }
 
-	public List<OrderItem> getItemList() {
-		return itemList;
-	}
+        public void setOrder(Order order) {
+            this.order = order;
+        }
 
-	@Override
-	public String toString() {
-		return "Order [orderId=" + orderId
-				+ ", customerName=" + customerName
-				+ ", customerEmail=" + customerEmail
-				+ ", orderValue=" + orderValue
-				+ ", retailPrice=" + retailPrice
-				+ ", discount=" + discount
-				+ ", shippingFee=" + shippingFee
-				+ ", shippingDiscount=" + shippingDiscount
-				+ ", itemList=" + itemList 
-				+ "]";
-	}
+    }
+
+    // Update the `pom.xml` file to include the `jakarta.persistence` dependency
+    <dependency>
+        <groupId> jakarta.persistence </groupId>
+        <artifactId> jakarta.persistence-api </artifactId>
+        <version> 2.2 </version>
+    </dependency>
 
 }

@@ -1,42 +1,56 @@
-package com.redhat.coolstore.rest;
+// Update the code as follows
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import org.reactor.core.publisher.Flux;
+import org.reactor.core.publisher.Mono;
+import reactor.http.client.HttpClient;
+import reactor.http.client.Request;
+import reactor.http.client.Response;
+import reactor.http.client.reactive.ClientRequestContextReactor;
+import reactor.http.client.reactive.HttpClientException;
+import reactor.http.client.reactive.ReactorClient;
+import reactor.util.annotation.Nullable;
+import static java.util.stream.Collectors.collect;
 
-import java.io.Serializable;
-import java.util.List;
+import static quarkus.resteasy.path.PathVariable.pathVariable;
+import static quarkus.resteasy.reactive.client.ClientRequestContext.DEFAULT;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+@Quarkus
+public class OrderEndpoint {
 
-import com.redhat.coolstore.model.Order;
-import com.redhat.coolstore.service.OrderService;
-
-@RequestScoped
-@Path("/orders")
-@Consumes(MediaType.APPLICATION_JSON)
-@Produces(MediaType.APPLICATION_JSON)
-public class OrderEndpoint implements Serializable {
-
-    private static final long serialVersionUID = -7227732980791688774L;
+    private final ReactorClient<HttpClient> client;
+    private final OrderService orderService;
 
     @Inject
-    private OrderService os;
+    public OrderEndpoint(ReactorClient<HttpClient> client, OrderService orderService) {
+        this.client = client.build();
+        this.orderService = orderService;
+    }
 
-
-    @GET
     @Path("/")
-    public List<Order> listAll() {
-        return os.getOrders();
-    }
-
     @GET
-    @Path("/{orderId}")
-    public Order getOrder(@PathParam("orderId") long orderId) {
-        return os.getOrderById(orderId);
+    @Produces(MediaType.APPLICATION_JSON)
+    public Flux<Order> listAll() {
+        return client.get()
+            .uri("/api/orders")
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToFlux(List.class)
+            .map(orders -> orders.stream()
+                .map(o -> Order.builder().id(o.getId()).customerName(o.getCustomerName()).orderDate(o.getOrderDate()).status(o.getStatus()).build())
+                .collect(collect()));
     }
 
+    @Path("/{orderId}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Mono<Order> getOrder(@PathParam("orderId") Long orderId) {
+        return client.get()
+            .uri("/api/orders/{orderId}")
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(Order.class)
+            .map(o -> Order.builder().id(o.getId()).customerName(o.getCustomerName()).orderDate(o.getOrderDate()).status(o.getStatus()).build());
+    }
 }

@@ -1,47 +1,68 @@
-package com.redhat.coolstore.service;
+// OrderServiceMDB.java
 
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
-import javax.inject.Inject;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageListener;
-import javax.jms.TextMessage;
-
+import io.quarkus.jms.client.TopicConnectionFactory;
+import io.quarkus.jms.client.QueueConnectionFactory;
+import io.quarkus.jms.client.MessageListener;
+import io.quarkus.jms.client.TextMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.redhat.coolstore.model.Order;
-import com.redhat.coolstore.utils.Transformers;
+import com.redhat.coolstore.model.Product;
+import com.redhat.coolstore.service.OrderService;
+import com.redhat.coolstore.service.CatalogService;
+import io.quarkus.vertx.http.client.QuarkusVertxHttpClient;
+import io.quarkus.vertx.http.client.RequestOptions;
+import io.quarkus.vertx.http.client.vertx.VertxHttpClient;
 
-@MessageDriven(name = "OrderServiceMDB", activationConfig = {
-	@ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = "topic/orders"),
-	@ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Topic"),
-	@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge")})
-public class OrderServiceMDB implements MessageListener { 
+import static io.quarkus.jms.client.MessageListener.DEFAULT_DESTINATION_LOOKUP;
+import static io.quarkus.jms.client.MessageListener.DEFAULT_DESTINATION_TYPE;
+import static io.quarkus.jms.client.MessageListener.DEFAULT_ACKNOWLEDGE_MODE;
 
-	@Inject
-	OrderService orderService;
+@QuarkusMessageDriven(name = "OrderServiceMDB", activationConfig = {
+    @ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = "quarkus.jms.DEFAULT_DESTINATION_LOOKUP"),
+    @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "quarkus.jms.DEFAULT_DESTINATION_TYPE"),
+    @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "quarkus.jms.DEFAULT_ACKNOWLEDGE_MODE")})
+public class OrderServiceMDB implements MessageListener<String> {
 
-	@Inject
-	CatalogService catalogService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(OrderServiceMDB.class);
 
-	@Override
-	public void onMessage(Message rcvMessage) {
-		System.out.println("\nMessage recd !");
-		TextMessage msg = null;
-		try {
-				if (rcvMessage instanceof TextMessage) {
-						msg = (TextMessage) rcvMessage;
-						String orderStr = msg.getBody(String.class);
-						System.out.println("Received order: " + orderStr);
-						Order order = Transformers.jsonToOrder(orderStr);
-						System.out.println("Order object is " + order);
-						orderService.save(order);
-						order.getItemList().forEach(orderItem -> {
-							catalogService.updateInventoryItems(orderItem.getProductId(), orderItem.getQuantity());
-						});
-				}
-		} catch (JMSException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Inject
+    private OrderService orderService;
 
+    @Inject
+    private CatalogService catalogService;
+
+    @Inject
+    private VertxHttpClient quarkusVertxHttpClient;
+
+    @Override
+    public void onMessage(String message) {
+        LOGGER.info("Message recd : {}", message);
+
+        String orderStr = message;
+        LOGGER.info("Received order: {}", orderStr);
+
+        Order order = ObjectMapper.readValue(orderStr, Order.class);
+        LOGGER.info("Order object is {}", order);
+
+        List<Order.Item> items = new ArrayList<>();
+        for (Product product : catalogService.getAllProducts()) {
+            items.add(new Order.Item(product.getId(), product.getInventory(), product.getQuantity()));
+        }
+
+        order.setItemList(items);
+        orderService.save(order);
+    }
+
+    @Inject
+    private OrderService orderService;
+
+    @Inject
+    private CatalogService catalogService;
+
+    @Inject
+    private TopicConnectionFactory topicConnectionFactory;
+
+    @Inject
+    private QueueConnectionFactory queueConnectionFactory;
 }

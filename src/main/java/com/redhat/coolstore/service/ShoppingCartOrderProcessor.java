@@ -1,35 +1,60 @@
-package com.redhat.coolstore.service;
+// Update the import statements
+import io.quarkus.jms.JmsComponent;
+import io.quarkus.micrometer.deployment.MicrometerInitializer;
+import org.apache.camel.component.jms.JmsComponent.JmsComponentAutoAcknowledge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import quarkus.arc.Inject;
+import quarkus.micrometer.runtime.Micrometer;
 
-import java.util.logging.Logger;
-import javax.ejb.Stateless;
-import javax.annotation.Resource;
-import javax.inject.Inject;
-import javax.jms.JMSContext;
-import javax.jms.Topic;
+// Update the `ShoppingCartOrderProcessor` class
+import static io.quarkus.arc.Arc.container;
+import static io.quarkus.micrometer.runtime.MicrometerTracing.tracer;
+import static org.apache.camel.component.jms.JmsComponent.jmsComponentAutoAcknowledge;
 
-import com.redhat.coolstore.model.ShoppingCart;
-import com.redhat.coolstore.utils.Transformers;
+@Quarkus
+@RequestScoped
+public class ShoppingCartOrderProcessor {
 
-@Stateless
-public class ShoppingCartOrderProcessor  {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShoppingCartOrderProcessor.class);
 
     @Inject
-    Logger log;
-
+    private ShoppingCartService shoppingCartService;
 
     @Inject
-    private transient JMSContext context;
+    @JmsComponent(JmsComponentAutoAcknowledge.AUTO_ACKNOWLEDGE)
+    private Emitter<String> topicEmitter;
 
-    @Resource(lookup = "java:/topic/orders")
-    private Topic ordersTopic;
+    @Inject
+    private MessagingTemplate messagingTemplate;
 
-    
-  
-    public void  process(ShoppingCart cart) {
-        log.info("Sending order from processor: ");
-        context.createProducer().send(ordersTopic, Transformers.shoppingCartToJson(cart));
+    @Inject
+    private Session session;
+
+    @Inject
+    private Queue<String> queue;
+
+    // Update the `createShoppingCartOrder` method
+    public Order createShoppingCartOrder(UUID customerId) {
+        return shoppingCartService.createOrder(customerId);
     }
 
+    // Update the `getShoppingCartOrder` method
+    public void getShoppingCartOrder(UUID sessionId) {
+        if (sessionId == null) {
+            return;
+        }
 
+        // Create a message listener for the queue
+        topicEmitter.onMessage(session.createConsumer(queue));
+    }
 
+    // Add the Micrometer Initializer to enable tracing
+    @ApplicationScoped
+    public static class MicrometerInitializer extends MicrometerInitializer {
+        @Override
+        protected void configure() {
+            tracer().name("shopping-cart-order-processor").addTags("http-method", "GET", "path", "/shopping-cart/order/{sessionId}");
+        }
+    }
 }

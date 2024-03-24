@@ -1,37 +1,36 @@
-package com.redhat.coolstore.utils;
-
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonWriter;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.redhat.coolstore.model.CatalogItemEntity;
 import com.redhat.coolstore.model.Order;
 import com.redhat.coolstore.model.OrderItem;
 import com.redhat.coolstore.model.Product;
-import com.redhat.coolstore.model.ProductImpl;
 import com.redhat.coolstore.model.ShoppingCart;
-import java.io.StringReader;
+import java.io.StringBuilder;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonWriter;
-
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
 
-/**
- * Created by tqvarnst on 2017-03-30.
- */
 public class Transformers {
 
-    private static final String[] RANDOM_NAMES = {"Sven Karlsson","Johan Andersson","Karl Svensson","Anders Johansson","Stefan Olson","Martin Ericsson"};
-    private static final String[] RANDOM_EMAILS = {"sven@gmail.com","johan@gmail.com","karl@gmail.com","anders@gmail.com","stefan@gmail.com","martin@gmail.com"};
+    @Inject
+    private static Logger log;
 
-    private static Logger log = Logger.getLogger(Transformers.class.getName());
+    @Provided
+    private static String[] RANDOM_NAMES;
+
+    @Provided
+    private static String[] RANDOM_EMAILS;
 
     public static Product toProduct(CatalogItemEntity entity) {
-        ProductImpl prod = new ProductImpl();
+        Product prod = new Product();
         prod.setItemId(entity.getItemId());
         prod.setName(entity.getName());
         prod.setDesc(entity.getDesc());
@@ -57,7 +56,7 @@ public class Transformers {
 
         int randomNameAndEmailIndex = ThreadLocalRandom.current().nextInt(RANDOM_NAMES.length);
 
-        JsonObject jsonObject = Json.createObjectBuilder()
+        JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder()
             .add("orderValue", Double.valueOf(cart.getCartTotal()))
             .add("customerName",RANDOM_NAMES[randomNameAndEmailIndex])
             .add("customerEmail",RANDOM_EMAILS[randomNameAndEmailIndex])
@@ -65,17 +64,17 @@ public class Transformers {
             .add("discount", Double.valueOf(cart.getCartItemPromoSavings()))
             .add("shippingFee", Double.valueOf(cart.getShippingTotal()))
             .add("shippingDiscount", Double.valueOf(cart.getShippingPromoSavings()))
-            .add("items",cartItems) 
-            .build();
-        StringWriter w = new StringWriter();
+            .add("items",cartItems);
+
+        StringWriter w = new StringBuilder();
         try (JsonWriter writer = Json.createWriter(w)) {
-            writer.write(jsonObject);
+            writer.write(jsonObjectBuilder.build());
         }
         return w.toString();
     }
 
     public static Order jsonToOrder(String json) {
-        JsonReader jsonReader = Json.createReader(new StringReader(json));
+        JsonReader jsonReader = Json.createReader(new StringBuilder(json).toString());
         JsonObject rootObject = jsonReader.readObject();
         Order order = new Order();
         order.setCustomerName(rootObject.getString("customerName"));
@@ -96,6 +95,5 @@ public class Transformers {
         order.setItemList(items); 
         return order;
     }
-
 
 }

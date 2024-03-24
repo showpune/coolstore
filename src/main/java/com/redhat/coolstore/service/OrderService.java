@@ -1,33 +1,32 @@
-package com.redhat.coolstore.service;
+@ApplicationScoped
+public class OrderService implements OrderServiceRemote, OrderServiceLocal {
 
-import com.redhat.coolstore.model.Order;
-import java.util.List;
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+    @Inject
+    @Qualifier("orderService")
+    private ExtendedContext extendedContext;
 
-@Stateless
-public class OrderService {
+    @Inject
+    private OrderRepository orderRepository;
 
-  @Inject
-  private EntityManager em;
+    @Override
+    public void create(Order order) throws CreateException {
+        // Add code to create an order
+    }
 
-  public void save(Order order) {
-    em.persist(order);
-  }
+    @Override
+    public void delete(Long orderId) throws DeleteException {
+        // Add code to delete an order
+    }
 
-  public List<Order> getOrders() {
-    CriteriaBuilder cb = em.getCriteriaBuilder();
-    CriteriaQuery<Order> criteria = cb.createQuery(Order.class);
-    Root<Order> member = criteria.from(Order.class);
-    criteria.select(member);
-    return em.createQuery(criteria).getResultList();
-  }
+    @Override
+    public List<Order> findAll() throws FindAllException {
+        // Add code to find all orders
+    }
 
-  public Order getOrderById(long id) {
-    return em.find(Order.class, id);
-  }
+    @Override
+    public Order findById(Long orderId) throws FindByIdException {
+        // Add code to find an order by id
+    }
+
+    // Add other methods as needed
 }

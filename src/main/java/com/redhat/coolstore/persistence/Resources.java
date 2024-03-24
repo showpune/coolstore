@@ -1,18 +1,20 @@
-package com.redhat.coolstore.persistence;
-
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Produces;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
-@Dependent
+@QuarkusApplication(
+    mainClass = CoolstoreApplication.class,
+    services = {
+        // Add any required services here
+    }
+)
+@ResteasyBindings(basePackages = "com.redhat.coolstore.persistence")
 public class Resources {
 
-    @PersistenceContext
-    private EntityManager em;
+    @Inject
+    @ExtendedContext
+    private ExtendedContext extendedContext;
 
-    @Produces
-    public EntityManager getEntityManager() {
-        return em;
+    @GET
+    @Path("/extendedContext")
+    @Produces(ExtendedContext.class)
+    public ExtendedContext getExtendedContext() {
+        return extendedContext;
     }
 }

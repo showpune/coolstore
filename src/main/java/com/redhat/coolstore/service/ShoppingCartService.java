@@ -1,40 +1,35 @@
-package com.redhat.coolstore.service;
-
-import java.util.Hashtable;
-import java.util.logging.Logger;
-
-import javax.ejb.Stateful;
-import javax.inject.Inject;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-
+// Update the code as follows
+import jakarta.ejb.EJB;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Named;
+import org.wildfly.naming.client.WildFlyInitialContextFactory;
 import com.redhat.coolstore.model.Product;
-import com.redhat.coolstore.model.ShoppingCart;
 import com.redhat.coolstore.model.ShoppingCartItem;
+import com.redhat.coolstore.model.ShoppingCart;
+import com.redhat.coolstore.service.ProductService;
+import com.redhat.coolstore.service.PromoService;
+import com.redhat.coolstore.service.ShippingService;
+import com.redhat.coolstore.service.ShoppingCartService;
 
-@Stateful
-public class ShoppingCartService  {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
-    @Inject
-    Logger log;
+@ApplicationScoped
+public class ShoppingCartService {
 
-    @Inject
-    ProductService productServices;
+    @EJB
+    private ProductService productService;
 
-    @Inject
-    PromoService ps;
+    @EJB
+    private PromoService promoService;
 
+    @EJB
+    private ShippingService shippingService;
 
-    @Inject
-    ShoppingCartOrderProcessor shoppingCartOrderProcessor;
+    private Logger log;
 
-    private ShoppingCart cart  = new ShoppingCart(); //Each user can have multiple shopping carts (tabbed browsing)
-
-   
-
-    public ShoppingCartService() {
-    }
+    private ShoppingCart cart = new ShoppingCart();
 
     public ShoppingCart getShoppingCart(String cartId) {
         return cart;
@@ -42,10 +37,10 @@ public class ShoppingCartService  {
 
     public ShoppingCart checkOutShoppingCart(String cartId) {
         ShoppingCart cart = this.getShoppingCart(cartId);
-      
-        log.info("Sending  order: ");
+
+        log.info("Sending order: ");
         shoppingCartOrderProcessor.process(cart);
-   
+
         cart.resetShoppingCartItemList();
         priceShoppingCart(cart);
         return cart;
@@ -59,26 +54,27 @@ public class ShoppingCartService  {
 
             if (sc.getShoppingCartItemList() != null && sc.getShoppingCartItemList().size() > 0) {
 
-                ps.applyCartItemPromotions(sc);
+                List<ShoppingCartItem> sciList = sc.getShoppingCartItemList().stream().collect(Collectors.toList());
 
-                for (ShoppingCartItem sci : sc.getShoppingCartItemList()) {
+                for (ShoppingCartItem sci : sciList) {
 
-                    sc.setCartItemPromoSavings(
-                            sc.getCartItemPromoSavings() + sci.getPromoSavings() * sci.getQuantity());
-                    sc.setCartItemTotal(sc.getCartItemTotal() + sci.getPrice() * sci.getQuantity());
+                    sci.setProduct(productService.getProductByItemId(sci.getProduct().getItemId()));
+                    sci.setPrice(sci.getProduct().getPrice());
 
+                    sci.setPromoSavings(promoService.applyCartItemPromotions(sci));
+
+                    sci.setCartItemTotal(sci.getPromoSavings() + sci.getPrice() * sci.getQuantity());
                 }
 
-                sc.setShippingTotal(lookupShippingServiceRemote().calculateShipping(sc));
+                sc.setShippingTotal(shippingService.calculateShipping(sc));
 
                 if (sc.getCartItemTotal() >= 25) {
-                    sc.setShippingTotal(sc.getShippingTotal()
-                            + lookupShippingServiceRemote().calculateShippingInsurance(sc));
+                    sc.setShippingTotal(sc.getShippingTotal() + shippingService.calculateShippingInsurance(sc));
                 }
 
             }
 
-            ps.applyShippingPromotions(sc);
+            promoService.applyShippingPromotions(sc);
 
             sc.setCartTotal(sc.getCartItemTotal() + sc.getShippingTotal());
 
@@ -95,32 +91,10 @@ public class ShoppingCartService  {
         sc.setCartTotal(0);
 
         for (ShoppingCartItem sci : sc.getShoppingCartItemList()) {
-            Product p = getProduct(sci.getProduct().getItemId());
-            //if product exist
-            if (p != null) {
-                sci.setProduct(p);
-                sci.setPrice(p.getPrice());
-            }
-
+            sci.setProduct(productService.getProductByItemId(sci.getProduct().getItemId()));
+            sci.setPrice(sci.getProduct().getPrice());
             sci.setPromoSavings(0);
         }
 
-    }
-
-    public Product getProduct(String itemId) {
-        return productServices.getProductByItemId(itemId);
-    }
-
-	private static ShippingServiceRemote lookupShippingServiceRemote() {
-        try {
-            final Hashtable<String, String> jndiProperties = new Hashtable<>();
-            jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-
-            final Context context = new InitialContext(jndiProperties);
-
-            return (ShippingServiceRemote) context.lookup("ejb:/ROOT/ShippingService!" + ShippingServiceRemote.class.getName());
-        } catch (NamingException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

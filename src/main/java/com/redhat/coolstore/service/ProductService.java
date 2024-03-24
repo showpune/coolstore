@@ -1,36 +1,46 @@
-package com.redhat.coolstore.service;
-
+// ProductService.java
+import io.quarkus.arc.Arc;
+import io.quarkus.hibernate.orm.PersistenceUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import org.hibernate.Criteria;
+import org.hibernate.SessionFactory;
+import org.jboss.logging.Logger;
 import com.redhat.coolstore.model.CatalogItemEntity;
 import com.redhat.coolstore.model.Product;
-import com.redhat.coolstore.utils.Transformers;
+import com.redhat.coolstore.utils.Transformer;
+import io.quarkus.hibernate.orm.runtime.SessionContext;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.redhat.coolstore.utils.Transformers.toProduct;
-
-@Stateless
+@ApplicationScoped
 public class ProductService {
 
-    @Inject
-    CatalogService cm;
+    private static final Logger log = Logger.getLogger(ProductService.class);
 
-    public ProductService() {
-    }
+    @Inject
+    private SessionFactory sessionFactory;
+
+    @Inject
+    private CatalogService catalogService;
 
     public List<Product> getProducts() {
-        return cm.getCatalogItems().stream().map(entity -> toProduct(entity)).collect(Collectors.toList());
+        Criteria criteria = sessionFactory.getCurrentSession().createCriteria(CatalogItemEntity.class);
+        criteria.add(Restrictions.eq("catalogId", catalogService.getCatalogId()));
+        return criteria.list().stream()
+            .map(entity -> Transformer.toProduct(entity))
+            .collect(Collectors.toList());
     }
 
-    public Product getProductByItemId(String itemId) {
-        CatalogItemEntity entity = cm.getCatalogItemById(itemId);
-        if (entity == null)
-            return null;
+    public Optional<Product> getProductByItemId(String itemId) {
+        CatalogItemEntity entity = catalogService.getCatalogItemById(itemId);
+        if (entity == null) {
+            log.debug("Product not found with id: {}", itemId);
+            return Optional.empty();
+        }
 
-        // Return the entity
-        return Transformers.toProduct(entity);
+        return Optional.of(Transformer.toProduct(entity));
     }
-
 }

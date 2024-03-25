@@ -1,10 +1,4 @@
-package com.redhat.coolstore.rest;
+# src/main/resources/application.properties
 
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-
-
-@ApplicationPath("/services")
-public class RestApplication extends Application {
-
-}
+# Set the application path for REST services in a Quarkus application
+quarkus.resteasy.path=/services

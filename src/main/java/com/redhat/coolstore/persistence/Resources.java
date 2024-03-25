@@ -1,18 +1,18 @@
 package com.redhat.coolstore.persistence;
 
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Produces;
+import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-@Dependent
-public class Resources {
+@ApplicationScoped
+public class ProductRepository {
 
     @PersistenceContext
-    private EntityManager em;
+    EntityManager entityManager;
 
-    @Produces
-    public EntityManager getEntityManager() {
-        return em;
+    public Product findProductById(Long id) {
+        return entityManager.find(Product.class, id);
     }
+
+    // Additional repository methods here
 }

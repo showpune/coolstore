@@ -4,7 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.enterprise.context.Dependent;
+// Updated import statement for Jakarta EE under Quarkus
+import jakarta.enterprise.context.Dependent;
 
 @Dependent
 public class ShoppingCart implements Serializable {
@@ -21,7 +22,7 @@ public class ShoppingCart implements Serializable {
 	
 	private double cartTotal;
 			
-	private List<ShoppingCartItem> shoppingCartItemList = new ArrayList<ShoppingCartItem>();
+	private List<ShoppingCartItem> shoppingCartItemList = new ArrayList<>();
 
 	public ShoppingCart() {
 		
@@ -36,31 +37,25 @@ public class ShoppingCart implements Serializable {
 	}
 
 	public void resetShoppingCartItemList() {
-		shoppingCartItemList = new ArrayList<ShoppingCartItem>();
+		shoppingCartItemList = new ArrayList<>();
 	}
 
 	public void addShoppingCartItem(ShoppingCartItem sci) {
 		
-		if ( sci != null ) {
-			
+		if (sci != null) {
 			shoppingCartItemList.add(sci);
-			
 		}
-		
 	}
 	
 	public boolean removeShoppingCartItem(ShoppingCartItem sci) {
 		
 		boolean removed = false;
 		
-		if ( sci != null ) {
-			
+		if (sci != null) {
 			removed = shoppingCartItemList.remove(sci);
-			
 		}
 		
 		return removed;
-		
 	}
 
 	public double getCartItemTotal() {

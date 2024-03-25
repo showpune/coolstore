@@ -2,23 +2,26 @@ package com.redhat.coolstore.service;
 
 import com.redhat.coolstore.model.Order;
 import java.util.List;
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import jakarta.inject.Inject; // Aligned with Quarkus' use of CDI
+import jakarta.transaction.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import javax.enterprise.context.ApplicationScoped; // Import for Quarkus CDI
 
-@Stateless
+@ApplicationScoped // Use ApplicationScoped to denote a bean that is globally unique and thread-safe
 public class OrderService {
 
   @Inject
   private EntityManager em;
 
+  @Transactional
   public void save(Order order) {
     em.persist(order);
   }
 
+  @Transactional
   public List<Order> getOrders() {
     CriteriaBuilder cb = em.getCriteriaBuilder();
     CriteriaQuery<Order> criteria = cb.createQuery(Order.class);
@@ -27,6 +30,7 @@ public class OrderService {
     return em.createQuery(criteria).getResultList();
   }
 
+  @Transactional
   public Order getOrderById(long id) {
     return em.find(Order.class, id);
   }

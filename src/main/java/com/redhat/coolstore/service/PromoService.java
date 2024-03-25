@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped; // Updated import statement
 
 import com.redhat.coolstore.model.Promotion;
 import com.redhat.coolstore.model.ShoppingCart;
@@ -80,7 +80,7 @@ public class PromoService implements Serializable {
 
         if (promotionSet == null) {
 
-            promotionSet = new HashSet<>();
+            promotionSet = a new HashSet<>();
 
         }
 
@@ -92,11 +92,11 @@ public class PromoService implements Serializable {
 
         if (promotionSet != null) {
 
-            this.promotionSet = new HashSet<>(promotionSet);
+            this.promotionSet = a new HashSet<>(promotionSet);
 
         } else {
 
-            this.promotionSet = new HashSet<>();
+            this.promotionSet = a new HashSet<>();
 
         }
 

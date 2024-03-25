@@ -1,17 +1,17 @@
 package com.redhat.coolstore.utils;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.InjectionPoint;
-import java.util.logging.Logger;
+import org.jboss.logging.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 
-public class Producers {
+@ApplicationScoped
+public class LoggingUtility {
 
-    Logger log = Logger.getLogger(Producers.class.getName());
+    @Inject
+    Logger logger;
 
-    @Produces
-    public Logger produceLog(InjectionPoint injectionPoint) {
-        return Logger.getLogger(injectionPoint.getMember().getDeclaringClass().getName());
+    public void logMessage(String message) {
+        logger.info(message);
     }
-
 }

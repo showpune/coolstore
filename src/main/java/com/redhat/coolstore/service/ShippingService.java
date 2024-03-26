@@ -1,78 +1,49 @@
 package com.redhat.coolstore.service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import javax.inject.ApplicationScoped;
+import javax.inject.Inject;
+import javax.money.Monetary;
+import javax.money.MonetaryAmount;
+import javax.money.MathContext;
+import javax.money.BigDecimalMath;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 
-import javax.ejb.Remote;
-import javax.ejb.Stateless;
+@ApplicationScoped
+public class ShippingService {
 
-import com.redhat.coolstore.model.ShoppingCart;
-
-@Stateless
-@Remote
-public class ShippingService implements ShippingServiceRemote {
-
-    @Override
-    public double calculateShipping(ShoppingCart sc) {
-
-        if (sc != null) {
-
-            if (sc.getCartItemTotal() >= 0 && sc.getCartItemTotal() < 25) {
-
-                return 2.99;
-
-            } else if (sc.getCartItemTotal() >= 25 && sc.getCartItemTotal() < 50) {
-
-                return 4.99;
-
-            } else if (sc.getCartItemTotal() >= 50 && sc.getCartItemTotal() < 75) {
-
-                return 6.99;
-
-            } else if (sc.getCartItemTotal() >= 75 && sc.getCartItemTotal() < 100) {
-
-                return 8.99;
-
-            } else if (sc.getCartItemTotal() >= 100 && sc.getCartItemTotal() < 10000) {
-
-                return 10.99;
-
-            }
-
+    @GET
+    @Path("/calculate-shipping")
+    public MonetaryAmount calculateShipping(@QueryParam("cartItemTotal") double cartItemTotal) {
+        if (cartItemTotal >= 0 && cartItemTotal < 25) {
+            return Monetary.amount(2.99);
+        } else if (cartItemTotal >= 25 && cartItemTotal < 50) {
+            return Monetary.amount(4.99);
+        } else if (cartItemTotal >= 50 && cartItemTotal < 75) {
+            return Monetary.amount(6.99);
+        } else if (cartItemTotal >= 75 && cartItemTotal < 100) {
+            return Monetary.amount(8.99);
+        } else if (cartItemTotal >= 100 && cartItemTotal < 10000) {
+            return Monetary.amount(10.99);
         }
-
-        return 0;
-
+        return Monetary.amount(0);
     }
 
-    @Override
-    public double calculateShippingInsurance(ShoppingCart sc) {
-
-        if (sc != null) {
-
-            if (sc.getCartItemTotal() >= 25 && sc.getCartItemTotal() < 100) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.02);
-
-            } else if (sc.getCartItemTotal() >= 100 && sc.getCartItemTotal() < 500) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.015);
-
-            } else if (sc.getCartItemTotal() >= 500 && sc.getCartItemTotal() < 10000) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.01);
-
-            }
-
+    @GET
+    @Path("/calculate-insurance")
+    public MonetaryAmount calculateInsurance(@QueryParam("cartItemTotal") double cartItemTotal) {
+        MonetaryAmount insuranceCost;
+        if (cartItemTotal >= 25 && cartItemTotal < 100) {
+            insuranceCost = Monetary.amount(cartItemTotal).multiply(Monetary.getAmountFactory(Monetary.getCurrency("USD")).setContext(new MathContext(2))).divide(100, new MathContext(2));
+        } else if (cartItemTotal >= 100 && cartItemTotal < 500) {
+            insuranceCost = Monetary.amount(cartItemTotal).multiply(Monetary.getAmountFactory(Monetary.getCurrency("USD")).setContext(new MathContext(2))).divide(100, new MathContext(2));
+        } else if (cartItemTotal >= 500 && cartItemTotal < 10000) {
+            insuranceCost = Monetary.amount(cartItemTotal).multiply(Monetary.getAmountFactory(Monetary.getCurrency("USD")).setContext(new MathContext(2))).divide(100, new MathContext(2));
+        } else {
+            insuranceCost = Monetary.amount(0);
         }
-
-        return 0;
-    }
-
-    private static double getPercentOfTotal(double value, double percentOfTotal) {
-        return BigDecimal.valueOf(value * percentOfTotal)
-                .setScale(2, RoundingMode.HALF_UP)
-                .doubleValue();
+        return insuranceCost;
     }
 
 }

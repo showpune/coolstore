@@ -1,36 +1,56 @@
 package com.redhat.coolstore.service;
 
-import com.redhat.coolstore.model.CatalogItemEntity;
 import com.redhat.coolstore.model.Product;
-import com.redhat.coolstore.utils.Transformers;
+import io.quarkus.hibernate.orm.PanacheEntity;
+import io.quarkus.hibernate.orm.PanacheEntityBase;
+import io.quarkus.hibernate.orm.PanacheRepository;
+import io.quarkus.hibernate.orm.PanacheRepositoryBase;
+import io.quarkus.logging.Log;
+import io.quarkus.logging.Loggers;
 
-import javax.ejb.Stateless;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
-import static com.redhat.coolstore.utils.Transformers.toProduct;
-
-@Stateless
+@ApplicationScoped
 public class ProductService {
 
+    private static final Logger LOGGER = Loggers.getLogger(ProductService.class);
+
     @Inject
-    CatalogService cm;
+    PanacheEntityBase<Product, Long> productBase;
 
-    public ProductService() {
+    public List<Product> findAll() {
+        return productBase.listAll();
     }
 
-    public List<Product> getProducts() {
-        return cm.getCatalogItems().stream().map(entity -> toProduct(entity)).collect(Collectors.toList());
+    public Product findById(Long id) {
+        return productBase.findById(id);
     }
 
-    public Product getProductByItemId(String itemId) {
-        CatalogItemEntity entity = cm.getCatalogItemById(itemId);
-        if (entity == null)
-            return null;
-
-        // Return the entity
-        return Transformers.toProduct(entity);
+    public Product create(Product product) {
+        Objects.requireNonNull(product, "Product cannot be null");
+        productBase.persist(product);
+        return product;
     }
 
+    public Product update(Product product) {
+        Objects.requireNonNull(product, "Product cannot be null");
+        return productBase.update(product);
+    }
+
+    public void delete(Long id) {
+        Product product = findById(id);
+        if (product != null) {
+            productBase.delete(product);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "ProductService{" +
+                "productBase=" + productBase +
+                '}';
+    }
 }

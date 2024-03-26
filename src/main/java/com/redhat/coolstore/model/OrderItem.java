@@ -1,48 +1,56 @@
 package com.redhat.coolstore.model;
 
-import java.io.Serializable;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotNull;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import org.hibernate.annotations.Cascade;
 
-@Entity
-@Table(name = "ORDER_ITEMS")
-public class OrderItem implements Serializable {
-	private static final long serialVersionUID = 64565445665456666L;
+public class OrderItem {
 
-	@Id
-	@Column(name="ID")
-	@GeneratedValue
-	private long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
 
-	private int quantity;
+    @ManyToOne
+    @NotNull
+    @Cascade(org.hibernate.annotations.CascadeType.PERSIST)
+    private Product product;
 
-	private String productId;
+    private int quantity;
 
-	public OrderItem() {}
+    public OrderItem() {}
 
-	public String getProductId() {
-		return productId;
-	}
+    public OrderItem(Product product, int quantity) {
+        this.product = product;
+        this.quantity = quantity;
+    }
 
-	public void setProductId(String productId) {
-		this.productId = productId;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public int getQuantity() {
-		return quantity;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setQuantity(int quantity) {
-		this.quantity = quantity;
-	}
+    public Product getProduct() {
+        return product;
+    }
 
-	@Override
-	public String toString() {
-		return "OrderItem [productId=" + productId + ", quantity=" + quantity + "]";
-	}
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
 
 }

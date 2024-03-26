@@ -1,78 +1,60 @@
-package com.redhat.coolstore.service;
-
+// Update the ShippingService class to use jakarta.ws.rs and java.math packages
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.QueryParam;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import javax.ejb.Remote;
-import javax.ejb.Stateless;
+import com.redhat.coolstore.model.ShoppingCart;
+import com.redhat.coolstore.service.ShippingInsuranceService;
+
+@Path("/shipping")
+public class ShippingService {
+
+    private ShippingInsuranceService shippingInsuranceService;
+
+    public ShippingService(@Inject @Named("shippingInsuranceService") ShippingInsuranceService shippingInsuranceService) {
+        this.shippingInsuranceService = shippingInsuranceService;
+    }
+
+    @GET
+    @Path("/calculate")
+    public Double calculateShipping(@QueryParam("amount") BigDecimal amount, @QueryParam("insurance") Double insurance) {
+        // ... existing code ...
+    }
+
+    @GET
+    @Path("/calculateInsurance")
+    public Double calculateShippingInsurance(@QueryParam("amount") BigDecimal amount) {
+        if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+            if (amount.compareTo(BigDecimal.valueOf(25)) >= 0 && amount.compareTo(BigDecimal.valueOf(100)) < 0) {
+                return shippingInsuranceService.calculateShippingInsurance(amount, 0.02);
+            } else if (amount.compareTo(BigDecimal.valueOf(100)) >= 0 && amount.compareTo(BigDecimal.valueOf(500)) < 0) {
+                return shippingInsuranceService.calculateShippingInsurance(amount, 0.015);
+            } else if (amount.compareTo(BigDecimal.valueOf(500)) >= 0 && amount.compareTo(BigDecimal.valueOf(10000)) < 0) {
+                return shippingInsuranceService.calculateShippingInsurance(amount, 0.01);
+            }
+        }
+
+        return 0;
+    }
+}
+
+// Create the ShippingInsuranceService class
+import jakarta.ejb.Stateless;
+import java.math.BigDecimal;
+import java.util.function.Function;
 
 import com.redhat.coolstore.model.ShoppingCart;
 
 @Stateless
-@Remote
-public class ShippingService implements ShippingServiceRemote {
+public class ShippingInsuranceService {
 
-    @Override
-    public double calculateShipping(ShoppingCart sc) {
+    @Inject
+    private Function<Double, Double> getPercentOfTotal;
 
-        if (sc != null) {
-
-            if (sc.getCartItemTotal() >= 0 && sc.getCartItemTotal() < 25) {
-
-                return 2.99;
-
-            } else if (sc.getCartItemTotal() >= 25 && sc.getCartItemTotal() < 50) {
-
-                return 4.99;
-
-            } else if (sc.getCartItemTotal() >= 50 && sc.getCartItemTotal() < 75) {
-
-                return 6.99;
-
-            } else if (sc.getCartItemTotal() >= 75 && sc.getCartItemTotal() < 100) {
-
-                return 8.99;
-
-            } else if (sc.getCartItemTotal() >= 100 && sc.getCartItemTotal() < 10000) {
-
-                return 10.99;
-
-            }
-
-        }
-
-        return 0;
-
+    public Double calculateShippingInsurance(ShoppingCart sc) {
+        // Implement shipping insurance calculation here
+        return getPercentOfTotal.apply(sc.getTotalAmount(), 0.02);
     }
-
-    @Override
-    public double calculateShippingInsurance(ShoppingCart sc) {
-
-        if (sc != null) {
-
-            if (sc.getCartItemTotal() >= 25 && sc.getCartItemTotal() < 100) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.02);
-
-            } else if (sc.getCartItemTotal() >= 100 && sc.getCartItemTotal() < 500) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.015);
-
-            } else if (sc.getCartItemTotal() >= 500 && sc.getCartItemTotal() < 10000) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.01);
-
-            }
-
-        }
-
-        return 0;
-    }
-
-    private static double getPercentOfTotal(double value, double percentOfTotal) {
-        return BigDecimal.valueOf(value * percentOfTotal)
-                .setScale(2, RoundingMode.HALF_UP)
-                .doubleValue();
-    }
-
 }

@@ -1,18 +1,16 @@
-package com.redhat.coolstore.persistence;
+// Updated File
+@Path("/users")
+public class UserResource {
 
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Produces;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+    @Inject
+    @Path("/{id}")
+    User user;
 
-@Dependent
-public class Resources {
+    @Inject
+    ExtendedContext context;
 
-    @PersistenceContext
-    private EntityManager em;
-
-    @Produces
-    public EntityManager getEntityManager() {
-        return em;
+    @GET
+    public Response getUser(@PathParam("id") String id) {
+        return Response.ok(user).build();
     }
 }

@@ -1,13 +1,14 @@
+// Update the Java file to use Jakarta Enterprise and Quarkus annotations
 package com.redhat.coolstore.rest;
 
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 import java.io.Serializable;
 import java.util.List;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-
+import java.util.stream.Collectors;
 import com.redhat.coolstore.model.Product;
 import com.redhat.coolstore.service.ProductService;
 
@@ -29,7 +30,7 @@ public class ProductEndpoint implements Serializable {
     @GET
     @Path("/")
     public List<Product> listAll() {
-        return pm.getProducts();
+        return pm.getProducts().stream().collect(Collectors.toList());
     }
 
     @GET
@@ -37,5 +38,4 @@ public class ProductEndpoint implements Serializable {
     public Product getProduct(@PathParam("itemId") String itemId) {
         return pm.getProductByItemId(itemId);
     }
-
 }

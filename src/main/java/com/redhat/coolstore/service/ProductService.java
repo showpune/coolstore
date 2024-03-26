@@ -1,36 +1,27 @@
-package com.redhat.coolstore.service;
-
-import com.redhat.coolstore.model.CatalogItemEntity;
-import com.redhat.coolstore.model.Product;
-import com.redhat.coolstore.utils.Transformers;
-
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.redhat.coolstore.utils.Transformers.toProduct;
-
-@Stateless
+// Update the ProductService class to use @ApplicationScoped instead of @Stateless
+@ApplicationScoped
 public class ProductService {
 
     @Inject
-    CatalogService cm;
+    private CatalogService catalogService;
 
-    public ProductService() {
+    @Inject
+    private ProductMapper productMapper;
+
+    public Mono<List<Product>> getProducts() {
+        return catalogService.getCatalogItems()
+            .map(items -> items.stream()
+                .map(item -> productMapper.toProduct(item))
+                .collect(Collectors.toList()));
     }
 
-    public List<Product> getProducts() {
-        return cm.getCatalogItems().stream().map(entity -> toProduct(entity)).collect(Collectors.toList());
+    public Mono<Product> getProductByItemId(String itemId) {
+        return catalogService.getCatalogItemById(itemId)
+            .flatMap(entity -> {
+                if (entity == null) {
+                    return Mono.empty();
+                }
+                return Mono.just(productMapper.toProduct(entity));
+            });
     }
-
-    public Product getProductByItemId(String itemId) {
-        CatalogItemEntity entity = cm.getCatalogItemById(itemId);
-        if (entity == null)
-            return null;
-
-        // Return the entity
-        return Transformers.toProduct(entity);
-    }
-
 }

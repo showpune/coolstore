@@ -1,47 +1,53 @@
-package com.redhat.coolstore.service;
+// Update the CatalogService to use Quarkus JMS client and CDI scope annotation
+import io.quarkus.jms.JmsClient;
+import io.quarkus.jms.MessageListenerContainer;
+import org.apache.qutee.jms.QuteeJmsClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.redhat.coolstore.domain.Order;
+import com.redhat.coolstore.service.OrderService;
+import io.quarkus.arc.Arc;
+import io.quarkus.jms.JmsClient;
 
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
 import javax.inject.Inject;
-import javax.jms.JMSException;
-import javax.jms.Message;
 import javax.jms.MessageListener;
-import javax.jms.TextMessage;
+import javax.jms.ObjectMessage;
+import java.util.UUID;
 
-import com.redhat.coolstore.model.Order;
-import com.redhat.coolstore.utils.Transformers;
+@QuarkusBean
+public class CatalogService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CatalogService.class);
 
-@MessageDriven(name = "OrderServiceMDB", activationConfig = {
-	@ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = "topic/orders"),
-	@ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Topic"),
-	@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge")})
-public class OrderServiceMDB implements MessageListener { 
+    @Inject
+    private OrderService orderService;
 
-	@Inject
-	OrderService orderService;
+    public void updateInventoryItems(String productId, int quantity) {
+        final Order order = new Order()
+            .order(new Order.Items()
+                .items(new Order.Items.Item()
+                    .productId(productId)
+                    .quantity(quantity)));
 
-	@Inject
-	CatalogService catalogService;
+        final Message<Order> message = new ObjectMessage<>(order);
 
-	@Override
-	public void onMessage(Message rcvMessage) {
-		System.out.println("\nMessage recd !");
-		TextMessage msg = null;
-		try {
-				if (rcvMessage instanceof TextMessage) {
-						msg = (TextMessage) rcvMessage;
-						String orderStr = msg.getBody(String.class);
-						System.out.println("Received order: " + orderStr);
-						Order order = Transformers.jsonToOrder(orderStr);
-						System.out.println("Order object is " + order);
-						orderService.save(order);
-						order.getItemList().forEach(orderItem -> {
-							catalogService.updateInventoryItems(orderItem.getProductId(), orderItem.getQuantity());
-						});
-				}
-		} catch (JMSException e) {
-			throw new RuntimeException(e);
-		}
-	}
+        final JmsClient jmsClient = JmsClient.builder()
+            .connectionFactory("java:/JmsConnectionFactory")
+            .build();
 
+        final MessageListenerContainer messageListenerContainer = jmsClient.createMessageListenerContainer();
+        messageListenerContainer.setMessageListener(new MessageListener() {
+            @Override
+            public void onMessage(Message message) {
+                try {
+                    LOGGER.info("Inventory item updated successfully.");
+                } catch (JMSException e) {
+                    LOGGER.error("Error updating inventory item", e);
+                }
+            }
+        });
+
+        messageListenerContainer.start();
+
+        orderService.save(order);
+    }
 }

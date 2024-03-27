@@ -1,24 +1,19 @@
 package com.redhat.coolstore.utils;
 
-import weblogic.application.ApplicationLifecycleEvent;
-import weblogic.application.ApplicationLifecycleListener;
+import jakarta.inject.Inject;
+import io.quarkus.logging.Log;
 
-import javax.inject.Inject;
-import java.util.logging.Logger;
-
-public class StartupListener extends ApplicationLifecycleListener {
+public class StartupListener {
 
     @Inject
-    Logger log;
+    Log log;
 
-    @Override
-    public void postStart(ApplicationLifecycleEvent evt) {
-        log.info("AppListener(postStart)");
+    public void onStart() {
+        log.info("AppListener(onStart)");
     }
 
-    @Override
-    public void preStop(ApplicationLifecycleEvent evt) {
-        log.info("AppListener(preStop)");
+    public void onStop() {
+        log.info("AppListener(onStop)");
     }
 
 }

@@ -1,30 +1,18 @@
 package com.redhat.coolstore.rest;
 
-import java.io.Serializable;
 import java.util.List;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 
+import io.quarkus.arc.inject.Inject;
 import com.redhat.coolstore.model.Product;
 import com.redhat.coolstore.service.ProductService;
 
-@RequestScoped
-@Path("/products")
-@Consumes(MediaType.APPLICATION_JSON)
-@Produces(MediaType.APPLICATION_JSON)
-public class ProductEndpoint implements Serializable {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -7227732980791688773L;
+public class ProductEndpoint {
 
     @Inject
     private ProductService pm;
-
 
     @GET
     @Path("/")
@@ -37,5 +25,4 @@ public class ProductEndpoint implements Serializable {
     public Product getProduct(@PathParam("itemId") String itemId) {
         return pm.getProductByItemId(itemId);
     }
-
 }

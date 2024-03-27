@@ -1,48 +1,62 @@
 package com.redhat.coolstore.model;
 
-import java.io.Serializable;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 
 @Entity
-@Table(name = "ORDER_ITEMS")
-public class OrderItem implements Serializable {
-	private static final long serialVersionUID = 64565445665456666L;
+public class OrderItem {
 
-	@Id
-	@Column(name="ID")
-	@GeneratedValue
-	private long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	private int quantity;
+    private Integer quantity;
 
-	private String productId;
+    private Double price;
 
-	public OrderItem() {}
+    @ManyToOne
+    private Product product;
 
-	public String getProductId() {
-		return productId;
-	}
+    public OrderItem() {}
 
-	public void setProductId(String productId) {
-		this.productId = productId;
-	}
+    public OrderItem(Integer quantity, Double price, Product product) {
+        this.quantity = quantity;
+        this.price = price;
+        this.product = product;
+    }
 
-	public int getQuantity() {
-		return quantity;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setQuantity(int quantity) {
-		this.quantity = quantity;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	@Override
-	public String toString() {
-		return "OrderItem [productId=" + productId + ", quantity=" + quantity + "]";
-	}
+    public Integer getQuantity() {
+        return quantity;
+    }
 
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
 }

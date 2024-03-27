@@ -1,47 +1,40 @@
-package com.redhat.coolstore.service;
+import io.smallrye.reactive.messaging.annotations.Incoming;
+import io.smallrye.reactive.messaging.annotations.Outgoing;
+import io.smallrye.reactive.messaging.connectors.Incoming;
+import io.smallrye.reactive.messaging.connectors.Outgoing;
+import io.smallrye.reactive.messaging.providers.connectors.Message;
+import io.quarkus.runtime.Startup;
+import io.quarkus.runtime.Shutdown;
+import io.quarkus.runtime.QuarkusApplication;
+import io.quarkus.runtime.annotations.InjectResource;
+import io.smallrye.reactive.messaging.impl.ReactiveMessage;
+import org.eclipse.microprofile.reactive.messaging.Message;
+import org.reactivestreams.Publisher;
 
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageListener;
-import javax.jms.TextMessage;
 
-import com.redhat.coolstore.model.Order;
-import com.redhat.coolstore.utils.Transformers;
+@Startup
+@Shutdown
+@ApplicationScoped
+public class OrderServiceMDB implements QuarkusApplication {
 
-@MessageDriven(name = "OrderServiceMDB", activationConfig = {
-	@ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = "topic/orders"),
-	@ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Topic"),
-	@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge")})
-public class OrderServiceMDB implements MessageListener { 
+    @Inject
+    @Incoming("order-in")
+    private Publisher<ReactiveMessage<Order>> incomingOrder;
 
-	@Inject
-	OrderService orderService;
+    @Outgoing("order-out")
+    private Publisher<ReactiveMessage<Order>> outgoingOrder;
 
-	@Inject
-	CatalogService catalogService;
+    @Override
+    public int run(String... args) {
+        // Process the order here
+        incomingOrder.subscribe().with(order -> outgoingOrder.subscribe().with(outgoingOrder -> outgoingOrder.send(order)));
+        return 0;
+    }
 
-	@Override
-	public void onMessage(Message rcvMessage) {
-		System.out.println("\nMessage recd !");
-		TextMessage msg = null;
-		try {
-				if (rcvMessage instanceof TextMessage) {
-						msg = (TextMessage) rcvMessage;
-						String orderStr = msg.getBody(String.class);
-						System.out.println("Received order: " + orderStr);
-						Order order = Transformers.jsonToOrder(orderStr);
-						System.out.println("Order object is " + order);
-						orderService.save(order);
-						order.getItemList().forEach(orderItem -> {
-							catalogService.updateInventoryItems(orderItem.getProductId(), orderItem.getQuantity());
-						});
-				}
-		} catch (JMSException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
+    @Override
+    public void close() {
+        // Perform any necessary cleanup here
+    }
 }

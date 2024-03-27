@@ -1,33 +1,41 @@
 package com.redhat.coolstore.service;
 
-import com.redhat.coolstore.model.Order;
-import java.util.List;
-import javax.ejb.Stateless;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import io.quarkus.panache.common.Page;
+import io.quarkus.panache.common.Sort;
 
-@Stateless
+@ApplicationScoped
 public class OrderService {
 
-  @Inject
-  private EntityManager em;
+    @Inject
+    OrderRepository orderRepository;
 
-  public void save(Order order) {
-    em.persist(order);
-  }
+    public PanacheQuery<Order> findAllOrders(Integer page, Integer size) {
+        return orderRepository.listAll(Sort.by("id"), Page.create(page, size));
+    }
 
-  public List<Order> getOrders() {
-    CriteriaBuilder cb = em.getCriteriaBuilder();
-    CriteriaQuery<Order> criteria = cb.createQuery(Order.class);
-    Root<Order> member = criteria.from(Order.class);
-    criteria.select(member);
-    return em.createQuery(criteria).getResultList();
-  }
+    public Long countOrders() {
+        return orderRepository.count();
+    }
 
-  public Order getOrderById(long id) {
-    return em.find(Order.class, id);
-  }
+    public Order findOrderById(Long id) {
+        return orderRepository.findById(id);
+    }
+
+    public void deleteOrder(Long id) {
+        orderRepository.deleteById(id);
+    }
+
+    public Order createOrder(Order order) {
+        order.persist();
+        return order;
+    }
+
+    public Order updateOrder(Order order) {
+        order.merge();
+        return order;
+    }
 }

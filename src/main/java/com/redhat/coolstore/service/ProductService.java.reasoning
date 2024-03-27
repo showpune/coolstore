@@ -1,0 +1,1 @@
+["1. Replace the `javax.ejb` import statement with `jakarta.ejb` on line 7.\n2. Replace the `javax.inject` import statement with `jakarta.inject` on line 8.\n3. Change the `@Stateless` annotation to `@ApplicationScoped` on line 14."]

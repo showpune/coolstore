@@ -1,21 +1,11 @@
-package com.redhat.coolstore.service;
+// Write the updated file for Quarkus here
 
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
-import javax.inject.Inject;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageListener;
-import javax.jms.TextMessage;
-
-import com.redhat.coolstore.model.Order;
-import com.redhat.coolstore.utils.Transformers;
-
+@ApplicationScoped
 @MessageDriven(name = "OrderServiceMDB", activationConfig = {
 	@ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = "topic/orders"),
-	@ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Topic"),
+	@ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
 	@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge")})
-public class OrderServiceMDB implements MessageListener { 
+public class OrderServiceMDB implements MessageListener {
 
 	@Inject
 	OrderService orderService;
@@ -32,7 +22,7 @@ public class OrderServiceMDB implements MessageListener {
 						msg = (TextMessage) rcvMessage;
 						String orderStr = msg.getBody(String.class);
 						System.out.println("Received order: " + orderStr);
-						Order order = Transformers.jsonToOrder(orderStr);
+						Order order = Order.fromJson(orderStr);
 						System.out.println("Order object is " + order);
 						orderService.save(order);
 						order.getItemList().forEach(orderItem -> {
@@ -43,5 +33,4 @@ public class OrderServiceMDB implements MessageListener {
 			throw new RuntimeException(e);
 		}
 	}
-
 }

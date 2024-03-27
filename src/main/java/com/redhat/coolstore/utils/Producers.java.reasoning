@@ -1,0 +1,1 @@
+["1. Replace the `javax.enterprise` import statement with `jakarta.enterprise` on lines 3 and 4.\n2. In Quarkus, you can skip the `@Produces` annotation completely if the producer method is annotated with a scope annotation, a stereotype or a qualifier. In this case, the field `log` can be accessed using a `@Named` getter method instead."]

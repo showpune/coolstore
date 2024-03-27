@@ -1,0 +1,1 @@
+["1. Replace the `javax.ejb` import statement with `jakarta.ejb` on line 6.\n2. Replace the `javax.inject` import statement with `jakarta.inject` on line 7."]

@@ -1,0 +1,1 @@
+["1. Replace the `javax.ws` import statement with `jakarta.ws`. This is because the `javax.ws` package has been deprecated in Quarkus and will be removed in a future version.\n\n2. JAX-RS activation is no longer necessary in Quarkus. You can set a root path like this but you don't have to. This means that the `@ApplicationPath` annotation is no longer needed and can be removed."]

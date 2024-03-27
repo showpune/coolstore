@@ -1,33 +1,30 @@
-package com.redhat.coolstore.service;
+// Update the file as follows:
 
-import java.util.Hashtable;
-import java.util.logging.Logger;
-
-import javax.ejb.Stateful;
-import javax.inject.Inject;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-
+import jakarta.ejb.EJB;
+import jakarta.inject.Inject;
+import org.jboss.logging.Logger;
 import com.redhat.coolstore.model.Product;
 import com.redhat.coolstore.model.ShoppingCart;
 import com.redhat.coolstore.model.ShoppingCartItem;
+import com.redhat.coolstore.service.ShoppingCartService;
+import com.redhat.coolstore.service.ProductService;
+import com.redhat.coolstore.service.PromoService;
+import com.redhat.coolstore.service.ShoppingCartOrderProcessor;
 
 @Stateful
 public class ShoppingCartService  {
 
-    @Inject
-    Logger log;
+    @EJB
+    private Logger log;
 
     @Inject
-    ProductService productServices;
+    private ProductService productServices;
 
     @Inject
-    PromoService ps;
-
+    private PromoService ps;
 
     @Inject
-    ShoppingCartOrderProcessor shoppingCartOrderProcessor;
+    private ShoppingCartOrderProcessor shoppingCartOrderProcessor;
 
     private ShoppingCart cart  = new ShoppingCart(); //Each user can have multiple shopping carts (tabbed browsing)
 

@@ -1,12 +1,7 @@
-package com.redhat.coolstore.rest;
-
-import java.io.Serializable;
-import java.util.List;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+// Update the ProductEndpoint class to use the new jakarta.enterprise, jakarta.inject, and jakarta.ws.rs imports
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.PathParam;
 
 import com.redhat.coolstore.model.Product;
 import com.redhat.coolstore.service.ProductService;

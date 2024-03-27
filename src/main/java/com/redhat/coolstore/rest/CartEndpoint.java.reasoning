@@ -1,0 +1,1 @@
+["1. Replace the `javax.enterprise` import statement with `jakarta.enterprise` on line 9.\n2. Replace the `javax.inject` import statement with `jakarta.inject` on line 10.\n3. Replace the `javax.ws` import statement with `jakarta.ws` on lines 11, 12, 13, 14, 15, and 16.\n4. Replace the `javax.ws.rs` import statement with `jakarta.ws.rs` on line 17."]

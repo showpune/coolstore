@@ -1,9 +1,10 @@
+// Update the Resources class as follows
 package com.redhat.coolstore.persistence;
 
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Produces;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Produces;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @Dependent
 public class Resources {
@@ -11,7 +12,9 @@ public class Resources {
     @PersistenceContext
     private EntityManager em;
 
+    // Update the getter method as follows
     @Produces
+    @Named("entityManager")
     public EntityManager getEntityManager() {
         return em;
     }

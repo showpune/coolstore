@@ -6,29 +6,29 @@ import com.redhat.coolstore.model.OrderItem;
 import com.redhat.coolstore.model.Product;
 import com.redhat.coolstore.model.ProductImpl;
 import com.redhat.coolstore.model.ShoppingCart;
+import io.quarkus.runtime.annotations.RegisterForReflection;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonWriter;
+import io.quarkus.logging.Log;
+
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonWriter;
-
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.logging.Logger;
 
-/**
- * Created by tqvarnst on 2017-03-30.
- */
+@RegisterForReflection(targets = ProductImpl.class)
 public class Transformers {
 
     private static final String[] RANDOM_NAMES = {"Sven Karlsson","Johan Andersson","Karl Svensson","Anders Johansson","Stefan Olson","Martin Ericsson"};
     private static final String[] RANDOM_EMAILS = {"sven@gmail.com","johan@gmail.com","karl@gmail.com","anders@gmail.com","stefan@gmail.com","martin@gmail.com"};
 
-    private static Logger log = Logger.getLogger(Transformers.class.getName());
+    private static Log log = Log.log(Transformers.class);
 
     public static Product toProduct(CatalogItemEntity entity) {
         ProductImpl prod = new ProductImpl();
@@ -41,36 +41,30 @@ public class Transformers {
             prod.setLink(entity.getInventory().getLink());
             prod.setQuantity(entity.getInventory().getQuantity());
         } else {
-            log.warning("Inventory for " + entity.getName() + "[" + entity.getItemId()+ "] unknown and missing");
+            log.warn("Inventory for " + entity.getName() + "[" + entity.getItemId()+ "] unknown and missing");
         }
         return prod;
     }
 
     public static String shoppingCartToJson(ShoppingCart cart) {
-        JsonArrayBuilder cartItems = Json.createArrayBuilder();
-        cart.getShoppingCartItemList().forEach(item -> {
-            cartItems.add(Json.createObjectBuilder()
-                .add("productSku",item.getProduct().getItemId())
-                .add("quantity",item.getQuantity())
-            );
-        });
+        JsonArrayBuilder cartItems = JsonbBuilder.create().toJson(cart.getShoppingCartItemList());
 
         int randomNameAndEmailIndex = ThreadLocalRandom.current().nextInt(RANDOM_NAMES.length);
 
-        JsonObject jsonObject = Json.createObjectBuilder()
-            .add("orderValue", Double.valueOf(cart.getCartTotal()))
+        JsonObject jsonObject = JsonbBuilder.create()
+            .createObjectBuilder()
+            .add("orderValue", cart.getCartTotal())
             .add("customerName",RANDOM_NAMES[randomNameAndEmailIndex])
             .add("customerEmail",RANDOM_EMAILS[randomNameAndEmailIndex])
             .add("retailPrice", cart.getShoppingCartItemList().stream().mapToDouble(i -> i.getQuantity()*i.getPrice()).sum())
-            .add("discount", Double.valueOf(cart.getCartItemPromoSavings()))
-            .add("shippingFee", Double.valueOf(cart.getShippingTotal()))
-            .add("shippingDiscount", Double.valueOf(cart.getShippingPromoSavings()))
-            .add("items",cartItems) 
+            .add("discount", cart.getCartItemPromoSavings())
+            .add("shippingFee", cart.getShippingTotal())
+            .add("shippingDiscount", cart.getShippingPromoSavings())
+            .add("items",cartItems)
             .build();
         StringWriter w = new StringWriter();
-        try (JsonWriter writer = Json.createWriter(w)) {
-            writer.write(jsonObject);
-        }
+        JsonWriter writer = Json.createWriter(w);
+        writer.write(jsonObject);
         return w.toString();
     }
 

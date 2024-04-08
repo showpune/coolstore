@@ -6,18 +6,11 @@ import com.redhat.coolstore.model.OrderItem;
 import com.redhat.coolstore.model.Product;
 import com.redhat.coolstore.model.ProductImpl;
 import com.redhat.coolstore.model.ShoppingCart;
+import jakarta.json.*;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonWriter;
-
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
 
 /**
@@ -50,23 +43,23 @@ public class Transformers {
         JsonArrayBuilder cartItems = Json.createArrayBuilder();
         cart.getShoppingCartItemList().forEach(item -> {
             cartItems.add(Json.createObjectBuilder()
-                .add("productSku",item.getProduct().getItemId())
-                .add("quantity",item.getQuantity())
+                    .add("productSku",item.getProduct().getItemId())
+                    .add("quantity",item.getQuantity())
             );
         });
 
         int randomNameAndEmailIndex = ThreadLocalRandom.current().nextInt(RANDOM_NAMES.length);
 
         JsonObject jsonObject = Json.createObjectBuilder()
-            .add("orderValue", Double.valueOf(cart.getCartTotal()))
-            .add("customerName",RANDOM_NAMES[randomNameAndEmailIndex])
-            .add("customerEmail",RANDOM_EMAILS[randomNameAndEmailIndex])
-            .add("retailPrice", cart.getShoppingCartItemList().stream().mapToDouble(i -> i.getQuantity()*i.getPrice()).sum())
-            .add("discount", Double.valueOf(cart.getCartItemPromoSavings()))
-            .add("shippingFee", Double.valueOf(cart.getShippingTotal()))
-            .add("shippingDiscount", Double.valueOf(cart.getShippingPromoSavings()))
-            .add("items",cartItems) 
-            .build();
+                .add("orderValue", JsonValue.NUMBER_VALUE, cart.getCartTotal())
+                .add("customerName", JsonValue.createString(RANDOM_NAMES[randomNameAndEmailIndex]))
+                .add("customerEmail", JsonValue.createString(RANDOM_EMAILS[randomNameAndEmailIndex]))
+                .add("retailPrice", JsonValue.NUMBER_VALUE, cart.getShoppingCartItemList().stream().mapToDouble(i -> i.getQuantity()*i.getPrice()).sum())
+                .add("discount", JsonValue.NUMBER_VALUE, cart.getCartItemPromoSavings())
+                .add("shippingFee", JsonValue.NUMBER_VALUE, cart.getShippingTotal())
+                .add("shippingDiscount", JsonValue.NUMBER_VALUE, cart.getShippingPromoSavings())
+                .add("items", cartItems)
+                .build();
         StringWriter w = new StringWriter();
         try (JsonWriter writer = Json.createWriter(w)) {
             writer.write(jsonObject);
@@ -96,6 +89,5 @@ public class Transformers {
         order.setItemList(items); 
         return order;
     }
-
 
 }

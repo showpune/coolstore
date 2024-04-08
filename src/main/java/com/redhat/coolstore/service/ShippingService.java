@@ -1,78 +1,60 @@
 package com.redhat.coolstore.service;
 
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
-import javax.ejb.Remote;
-import javax.ejb.Stateless;
+@Path("/shipping")
+public class ShippingService {
 
-import com.redhat.coolstore.model.ShoppingCart;
+    @Inject
+    ShoppingCart shoppingCart;
 
-@Stateless
-@Remote
-public class ShippingService implements ShippingServiceRemote {
+    @GET
+    @Path("/calculateShipping")
+    public BigDecimal calculateShipping() {
+        if (shoppingCart != null) {
+            double cartItemTotal = shoppingCart.getCartItemTotal();
+            BigDecimal shippingCost;
 
-    @Override
-    public double calculateShipping(ShoppingCart sc) {
-
-        if (sc != null) {
-
-            if (sc.getCartItemTotal() >= 0 && sc.getCartItemTotal() < 25) {
-
-                return 2.99;
-
-            } else if (sc.getCartItemTotal() >= 25 && sc.getCartItemTotal() < 50) {
-
-                return 4.99;
-
-            } else if (sc.getCartItemTotal() >= 50 && sc.getCartItemTotal() < 75) {
-
-                return 6.99;
-
-            } else if (sc.getCartItemTotal() >= 75 && sc.getCartItemTotal() < 100) {
-
-                return 8.99;
-
-            } else if (sc.getCartItemTotal() >= 100 && sc.getCartItemTotal() < 10000) {
-
-                return 10.99;
-
+            if (cartItemTotal >= 0 && cartItemTotal < 25) {
+                shippingCost = BigDecimal.valueOf(2.99);
+            } else if (cartItemTotal >= 25 && cartItemTotal < 50) {
+                shippingCost = BigDecimal.valueOf(4.99);
+            } else if (cartItemTotal >= 50 && cartItemTotal < 75) {
+                shippingCost = BigDecimal.valueOf(6.99);
+            } else if (cartItemTotal >= 75 && cartItemTotal < 100) {
+                shippingCost = BigDecimal.valueOf(8.99);
+            } else if (cartItemTotal >= 100 && cartItemTotal < 10000) {
+                shippingCost = BigDecimal.valueOf(10.99);
+            } else {
+                shippingCost = BigDecimal.ZERO;
             }
 
+            return shippingCost;
         }
 
-        return 0;
-
+        return BigDecimal.ZERO;
     }
 
-    @Override
-    public double calculateShippingInsurance(ShoppingCart sc) {
-
-        if (sc != null) {
-
-            if (sc.getCartItemTotal() >= 25 && sc.getCartItemTotal() < 100) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.02);
-
-            } else if (sc.getCartItemTotal() >= 100 && sc.getCartItemTotal() < 500) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.015);
-
-            } else if (sc.getCartItemTotal() >= 500 && sc.getCartItemTotal() < 10000) {
-
-                return getPercentOfTotal(sc.getCartItemTotal(), 0.01);
-
-            }
-
+    @GET
+    @Path("/calculateShippingInsurance")
+    public BigDecimal calculateShippingInsurance(@QueryParam("cartItemTotal") double cartItemTotal) {
+        if (cartItemTotal >= 25 && cartItemTotal < 100) {
+            return getPercentOfTotal(cartItemTotal, 0.02);
+        } else if (cartItemTotal >= 100 && cartItemTotal < 500) {
+            return getPercentOfTotal(cartItemTotal, 0.015);
+        } else if (cartItemTotal >= 500 && cartItemTotal < 10000) {
+            return getPercentOfTotal(cartItemTotal, 0.01);
         }
 
-        return 0;
+        return BigDecimal.ZERO;
     }
 
-    private static double getPercentOfTotal(double value, double percentOfTotal) {
+    private static BigDecimal getPercentOfTotal(double value, double percentOfTotal) {
         return BigDecimal.valueOf(value * percentOfTotal)
-                .setScale(2, RoundingMode.HALF_UP)
-                .doubleValue();
+                .setScale(2, RoundingMode.HALF_UP);
     }
-
 }

@@ -2,11 +2,7 @@ package com.redhat.coolstore.model;
 
 import java.io.Serializable;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "ORDER_ITEMS")
@@ -28,10 +24,12 @@ public class OrderItem implements Serializable {
 		return productId;
 	}
 
+	@Column(name = "PRODUCT_ID") // Update the column name as well
 	public void setProductId(String productId) {
 		this.productId = productId;
 	}
 
+	@Column(name = "QUANTITY") // Update the column name as well
 	public int getQuantity() {
 		return quantity;
 	}

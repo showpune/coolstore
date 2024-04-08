@@ -5,16 +5,19 @@ import java.util.logging.Logger;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
+import javax.inject.Singleton;
+
+import org.jboss.resteasy.annotations.Inject; // Add this import for Resteasy injection
+import jakarta.ejb.Stateless; // Change @Stateful to @Stateless
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped; // Change @Inject to @ApplicationScoped for ShoppingCartOrderProcessor
 
 import com.redhat.coolstore.model.Product;
 import com.redhat.coolstore.model.ShoppingCart;
 import com.redhat.coolstore.model.ShoppingCartItem;
 
-@Stateful
-public class ShoppingCartService  {
+@Stateless
+public class ShoppingCartService {
 
     @Inject
     Logger log;
@@ -25,16 +28,11 @@ public class ShoppingCartService  {
     @Inject
     PromoService ps;
 
-
     @Inject
+    @ApplicationScoped // Change to ApplicationScoped for ShoppingCartOrderProcessor
     ShoppingCartOrderProcessor shoppingCartOrderProcessor;
 
-    private ShoppingCart cart  = new ShoppingCart(); //Each user can have multiple shopping carts (tabbed browsing)
-
-   
-
-    public ShoppingCartService() {
-    }
+    private ShoppingCart cart  = new ShoppingCart();
 
     public ShoppingCart getShoppingCart(String cartId) {
         return cart;
@@ -42,10 +40,10 @@ public class ShoppingCartService  {
 
     public ShoppingCart checkOutShoppingCart(String cartId) {
         ShoppingCart cart = this.getShoppingCart(cartId);
-      
-        log.info("Sending  order: ");
+
+        log.info("Sending order: ");
         shoppingCartOrderProcessor.process(cart);
-   
+
         cart.resetShoppingCartItemList();
         priceShoppingCart(cart);
         return cart;
@@ -63,17 +61,21 @@ public class ShoppingCartService  {
 
                 for (ShoppingCartItem sci : sc.getShoppingCartItemList()) {
 
-                    sc.setCartItemPromoSavings(
-                            sc.getCartItemPromoSavings() + sci.getPromoSavings() * sci.getQuantity());
-                    sc.setCartItemTotal(sc.getCartItemTotal() + sci.getPrice() * sci.getQuantity());
+                    Product p = getProduct(sci.getProduct().getItemId());
+                    //if product exist
+                    if (p != null) {
+                        sci.setProduct(p);
+                        sci.setPrice(p.getPrice());
+                    }
 
+                    sci.setPromoSavings(0);
                 }
 
-                sc.setShippingTotal(lookupShippingServiceRemote().calculateShipping(sc));
+                sc.setShippingTotal(calculateShipping(sc));
 
                 if (sc.getCartItemTotal() >= 25) {
                     sc.setShippingTotal(sc.getShippingTotal()
-                            + lookupShippingServiceRemote().calculateShippingInsurance(sc));
+                            + calculateShippingInsurance(sc));
                 }
 
             }
@@ -111,16 +113,13 @@ public class ShoppingCartService  {
         return productServices.getProductByItemId(itemId);
     }
 
-	private static ShippingServiceRemote lookupShippingServiceRemote() {
-        try {
-            final Hashtable<String, String> jndiProperties = new Hashtable<>();
-            jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+    private double calculateShipping(ShoppingCart sc) {
+        // Implement shipping calculation logic here
+        return 0;
+    }
 
-            final Context context = new InitialContext(jndiProperties);
-
-            return (ShippingServiceRemote) context.lookup("ejb:/ROOT/ShippingService!" + ShippingServiceRemote.class.getName());
-        } catch (NamingException e) {
-            throw new RuntimeException(e);
-        }
+    private double calculateShippingInsurance(ShoppingCart sc) {
+        // Implement shipping insurance calculation logic here
+        return 0;
     }
 }

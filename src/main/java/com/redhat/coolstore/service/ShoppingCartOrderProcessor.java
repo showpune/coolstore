@@ -1,35 +1,48 @@
 package com.redhat.coolstore.service;
 
 import java.util.logging.Logger;
-import javax.ejb.Stateless;
-import javax.annotation.Resource;
 import javax.inject.Inject;
-import javax.jms.JMSContext;
-import javax.jms.Topic;
+import javax.inject.Named;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Provider;
+import jakarta.jms.Message;
+import jakarta.jms.MessageProducer;
+import jakarta.jms.TextMessage;
+import jakarta.jms.Topic;
 
 import com.redhat.coolstore.model.ShoppingCart;
-import com.redhat.coolstore.utils.Transformers;
+import io.smallrye.mutiny.Uni;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
-@Stateless
-public class ShoppingCartOrderProcessor  {
+@ApplicationScoped
+public class ShoppingCartOrderProcessor {
 
     @Inject
     Logger log;
 
-
     @Inject
-    private transient JMSContext context;
+    @Named("ordersTopic")
+    Provider<Emitter<ShoppingCart>> topicEmitter;
 
-    @Resource(lookup = "java:/topic/orders")
-    private Topic ordersTopic;
-
-    
-  
-    public void  process(ShoppingCart cart) {
-        log.info("Sending order from processor: ");
-        context.createProducer().send(ordersTopic, Transformers.shoppingCartToJson(cart));
+    @PostConstruct
+    void init() {
+        log.info("Initializing ShoppingCartOrderProcessor");
     }
 
-
+    @Incoming("orders")
+    public Uni<Void> process(ShoppingCart cart) {
+        log.info("Sending order from processor: ");
+        return Uni.createFrom().item(cart)
+                .map(shoppingCart -> {
+                    MessageProducer producer = topicEmitter.get().get().getSender();
+                    TextMessage message = (TextMessage) producer.createTextMessage();
+                    message.setText(Transformers.shoppingCartToJson(shoppingCart));
+                    producer.send();
+                    return null;
+                });
+    }
 
 }

@@ -2,78 +2,57 @@ package com.redhat.coolstore.service;
 
 import com.redhat.coolstore.model.Order;
 import com.redhat.coolstore.utils.Transformers;
+import io.smallrye.reactive.messaging.kafka.KafkaConnectionFactory;
+import io.smallrye.reactive.messaging.kafka.KafkaEmitter;
+import io.smallrye.reactive.messaging.kafka.KafkaSession;
+import io.smallrye.reactive.messaging.kafka.KafkaTopic;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import reactor.core.publisher.Mono;
 
-import javax.inject.Inject;
-import javax.jms.*;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.rmi.PortableRemoteObject;
-import java.util.Hashtable;
+import java.util.List;
 
-public class InventoryNotificationMDB implements MessageListener {
+public class InventoryNotificationMDB {
 
     private static final int LOW_THRESHOLD = 50;
 
     @Inject
     private CatalogService catalogService;
 
-    private final static String JNDI_FACTORY = "weblogic.jndi.WLInitialContextFactory";
-    private final static String JMS_FACTORY = "TCF";
-    private final static String TOPIC = "topic/orders";
-    private TopicConnection tcon;
-    private TopicSession tsession;
-    private TopicSubscriber tsubscriber;
+    @Inject
+    @KafkaTopic("orders")
+    KafkaTopic<String> ordersTopic;
 
-    public void onMessage(Message rcvMessage) {
-        TextMessage msg;
-        {
-            try {
-                System.out.println("received message inventory");
-                if (rcvMessage instanceof TextMessage) {
-                    msg = (TextMessage) rcvMessage;
-                    String orderStr = msg.getBody(String.class);
-                    Order order = Transformers.jsonToOrder(orderStr);
-                    order.getItemList().forEach(orderItem -> {
-                        int old_quantity = catalogService.getCatalogItemById(orderItem.getProductId()).getInventory().getQuantity();
-                        int new_quantity = old_quantity - orderItem.getQuantity();
-                        if (new_quantity < LOW_THRESHOLD) {
-                            System.out.println("Inventory for item " + orderItem.getProductId() + " is below threshold (" + LOW_THRESHOLD + "), contact supplier!");
-                        } else {
-                            orderItem.setQuantity(new_quantity);
-                        }
-                    });
-                }
+    @Inject
+    @Outgoing("HELLOWORLDMDBTopic")
+    KafkaEmitter<String> topicEmitter;
 
-
-            } catch (JMSException jmse) {
-                System.err.println("An exception occurred: " + jmse.getMessage());
+    @Incoming("HELLOWORLDMDBTopic")
+    public void onMessage(String message) {
+        System.out.println("received message inventory");
+        Order order = Transformers.jsonToOrder(message);
+        List<Order.OrderItem> orderItems = order.getItemList();
+        orderItems.forEach(orderItem -> {
+            int old_quantity = catalogService.getCatalogItemById(orderItem.getProductId()).getInventory().getQuantity();
+            int new_quantity = old_quantity - orderItem.getQuantity();
+            if (new_quantity < LOW_THRESHOLD) {
+                System.out.println("Inventory for item " + orderItem.getProductId() + " is below threshold (" + LOW_THRESHOLD + "), contact supplier!");
+                topicEmitter.send(Mono.just("Inventory for item " + orderItem.getProductId() + " is below threshold (" + LOW_THRESHOLD + "), contact supplier!"));
+            } else {
+                orderItem.setQuantity(new_quantity);
             }
-        }
+        });
     }
 
-    public void init() throws NamingException, JMSException {
-        Context ctx = getInitialContext();
-        TopicConnectionFactory tconFactory = (TopicConnectionFactory) PortableRemoteObject.narrow(ctx.lookup(JMS_FACTORY), TopicConnectionFactory.class);
-        tcon = tconFactory.createTopicConnection();
-        tsession = tcon.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
-        Topic topic = (Topic) PortableRemoteObject.narrow(ctx.lookup(TOPIC), Topic.class);
-        tsubscriber = tsession.createSubscriber(topic);
-        tsubscriber.setMessageListener(this);
-        tcon.start();
+    @Inject
+    public void init(KafkaConnectionFactory connectionFactory, KafkaSession session) {
+        ordersTopic.subscribe(this::onMessage);
+        session.start();
     }
 
-    public void close() throws JMSException {
-        tsubscriber.close();
-        tsession.close();
-        tcon.close();
-    }
-
-    private static InitialContext getInitialContext() throws NamingException {
-        Hashtable<String, String> env = new Hashtable<>();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, JNDI_FACTORY);
-        env.put(Context.PROVIDER_URL, "t3://localhost:7001");
-        env.put("weblogic.jndi.createIntermediateContexts", "true");
-        return new InitialContext(env);
+    public void close() {
+        ordersTopic.unsubscribe();
+        session.close();
     }
 }

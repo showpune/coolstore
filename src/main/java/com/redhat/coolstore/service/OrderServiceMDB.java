@@ -1,47 +1,34 @@
-package com.redhat.coolstore.service;
-
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
-import javax.inject.Inject;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageListener;
-import javax.jms.TextMessage;
-
+import jakarta.ejb.ApplicationScoped;
+import jakarta.enterprise.inject.Inject;
+import jakarta.jms.Message;
+import jakarta.jms.TextMessage;
 import com.redhat.coolstore.model.Order;
 import com.redhat.coolstore.utils.Transformers;
 
-@MessageDriven(name = "OrderServiceMDB", activationConfig = {
-	@ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = "topic/orders"),
-	@ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Topic"),
-	@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge")})
-public class OrderServiceMDB implements MessageListener { 
+import org.eclipse.microprofile.reactive.messaging.Message;
+import org.eclipse.microprofile.reactive.messaging.annotations.Component;
+import org.eclipse.microprofile.reactive.messaging.annotations.Incoming;
+import org.eclipse.microprofile.reactive.messaging.annotations.Produces;
+import org.eclipse.microprofile.reactive.messaging.annotations.Streamed;
 
-	@Inject
-	OrderService orderService;
+@Component
+public class OrderServiceMDB {
 
-	@Inject
-	CatalogService catalogService;
+    @Inject
+    OrderService orderService;
 
-	@Override
-	public void onMessage(Message rcvMessage) {
-		System.out.println("\nMessage recd !");
-		TextMessage msg = null;
-		try {
-				if (rcvMessage instanceof TextMessage) {
-						msg = (TextMessage) rcvMessage;
-						String orderStr = msg.getBody(String.class);
-						System.out.println("Received order: " + orderStr);
-						Order order = Transformers.jsonToOrder(orderStr);
-						System.out.println("Order object is " + order);
-						orderService.save(order);
-						order.getItemList().forEach(orderItem -> {
-							catalogService.updateInventoryItems(orderItem.getProductId(), orderItem.getQuantity());
-						});
-				}
-		} catch (JMSException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Inject
+    CatalogService catalogService;
 
+    @Incoming("topic/orders")
+    @Produces("orders")
+    @Streamed
+    public void onMessage(Message<String> message) {
+        String orderStr = message.getBody();
+        Order order = Transformers.jsonToOrder(orderStr);
+        orderService.save(order);
+        order.getItemList().forEach(orderItem -> {
+            catalogService.updateInventoryItems(orderItem.getProductId(), orderItem.getQuantity());
+        });
+    }
 }

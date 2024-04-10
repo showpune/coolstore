@@ -1,56 +1,53 @@
-package com.redhat.coolstore.service;
+// Add the following import statements at the top of the file:
+import jakarta.ejb.EJB;
+import jakarta.inject.Inject;
 
-import java.util.Hashtable;
-import java.util.logging.Logger;
+// Update the import statements on lines 6 and 7:
+import javax.ejb.Stateless;
+import javax.inject.Provider;
 
-import javax.ejb.Stateful;
-import javax.inject.Inject;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
+// Update the class declaration on line 5:
+@Stateless
+public class ShoppingCartService {
 
-import com.redhat.coolstore.model.Product;
-import com.redhat.coolstore.model.ShoppingCart;
-import com.redhat.coolstore.model.ShoppingCartItem;
-
-@Stateful
-public class ShoppingCartService  {
+// Update the methods and fields as follows:
+    @Inject
+    private Logger log;
 
     @Inject
-    Logger log;
+    private ProductService productServices;
 
     @Inject
-    ProductService productServices;
+    private PromoService ps;
 
     @Inject
-    PromoService ps;
+    private ShoppingCartOrderProcessor shoppingCartOrderProcessor;
 
+    private ShoppingCart cart = new ShoppingCart();
 
-    @Inject
-    ShoppingCartOrderProcessor shoppingCartOrderProcessor;
-
-    private ShoppingCart cart  = new ShoppingCart(); //Each user can have multiple shopping carts (tabbed browsing)
-
-   
-
+    // Update the constructor on line 9:
     public ShoppingCartService() {
     }
 
-    public ShoppingCart getShoppingCart(String cartId) {
+    // Update the getShoppingCart method on line 12:
+    @EJB
+    public ShoppingCart getShoppingCart(@javax.inject.Qualifier("cartId") String cartId) {
         return cart;
     }
 
-    public ShoppingCart checkOutShoppingCart(String cartId) {
+    // Update the checkOutShoppingCart method on lines 15-19:
+    public ShoppingCart checkOutShoppingCart(@javax.inject.Qualifier("cartId") String cartId) {
         ShoppingCart cart = this.getShoppingCart(cartId);
-      
-        log.info("Sending  order: ");
+
+        log.info("Sending order: ");
         shoppingCartOrderProcessor.process(cart);
-   
+
         cart.resetShoppingCartItemList();
         priceShoppingCart(cart);
         return cart;
     }
 
+    // Update the priceShoppingCart method on lines 22-31:
     public void priceShoppingCart(ShoppingCart sc) {
 
         if (sc != null) {
@@ -86,6 +83,7 @@ public class ShoppingCartService  {
 
     }
 
+    // Update the initShoppingCartForPricing method on lines 35-39:
     private void initShoppingCartForPricing(ShoppingCart sc) {
 
         sc.setCartItemTotal(0);
@@ -107,11 +105,15 @@ public class ShoppingCartService  {
 
     }
 
-    public Product getProduct(String itemId) {
+    // Update the getProduct method on line 45:
+    @EJB
+    public Product getProduct(@javax.inject.Qualifier("itemId") String itemId) {
         return productServices.getProductByItemId(itemId);
     }
 
-	private static ShippingServiceRemote lookupShippingServiceRemote() {
+	// Update the lookupShippingServiceRemote method on line 49:
+    @javax.inject.Singleton
+    private ShippingServiceRemote lookupShippingServiceRemote() {
         try {
             final Hashtable<String, String> jndiProperties = new Hashtable<>();
             jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");

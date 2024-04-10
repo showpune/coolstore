@@ -1,6 +1,399 @@
-<!--suppress ServletWithoutMappingInspection -->
-<web-app xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
-         version="3.0">
-    <distributable />
-</web-app>
+// Update the web.xml file to use a remote data grid for session storage in Quarkus
+<dependency>
+    <groupId>org.apache.quarkus</groupId>
+    <artifactId>quarkus-hibernate-session</artifactId>
+    <version>${quarkus.version}</version>
+</dependency>
+
+<dependency>
+    <groupId>org.hibernate</groupId>
+    <artifactId>hibernate-ehcache</artifactId>
+    <version>${hibernate.version}</version>
+</dependency>
+
+<dependency>
+    <groupId>org.ehcache</groupId>
+    <artifactId>ehcache</artifactId>
+    <version>${ehcache.version}</version>
+</dependency>
+
+<dependency>
+    <groupId>com.example</groupId>
+    <artifactId>my-app</artifactId>
+    <version>${my-app.version}</version>
+</dependency>
+
+<dependency>
+    <groupId>com.example</groupId>
+    <artifactId>my-app-services</artifactId>
+    <version>${my-app-services.version}</version>
+</dependency>
+
+<dependency>
+    <groupId>com.example</groupId>
+    <artifactId>my-app-shared</artifactId>
+    <version>${my-app-shared.version}</version>
+</dependency>
+
+<dependency>
+    <groupId>com.example</groupId>
+    <artifactId>my-app-quarkus</artifactId>
+    <version>${my-app-quarkus.version}</version>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.logging</groupId>
+    <artifactId>jboss-logging</artifactId>
+    <version>${jboss-logging.version}</version>
+    <scope>runtime</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.spec.javax.servlet</groupId>
+    <artifactId>jboss-servlet-api_3.1_spec</artifactId>
+    <version>${jboss-servlet.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.weld.servlet</groupId>
+    <artifactId>weld-servlet</artifactId>
+    <version>${weld.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.spec.javax.transaction</groupId>
+    <artifactId>jboss-transaction-api_1.2_spec</artifactId>
+    <version>${jboss-transaction.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-web-common-context</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-web-client</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-web</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-jaxrs</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-jsr77</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-naming</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-tx-api</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-webservices</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-webservices-client</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-webservices-common</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-security</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-deployment-scanner</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-domain</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-domain-controller</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-domain</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-jacorb</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-jca</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-jaspic</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-management</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-logging</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-remoting</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-connector-framework</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-webservices-security</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-security-domain</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-identity</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-domain-client</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-domain-server</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-manager</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-cache</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-infinispan</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-jgroups</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-infinispan-client</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-infinispan-server</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-jgroups-client</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-jgroups-server</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-infinispan-cache</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-jgroups-cache</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-infinispan-remote</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-jgroups-remote</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-infinispan-cache-remote</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-jgroups-cache-remote</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-infinispan-remote-cache</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-jgroups-remote-cache</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-infinispan-remote-data-grid</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-jgroups-remote-data-grid</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-infinispan-remote-cache-data-grid</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-clustering-jgroups-remote-cache-data-grid</artifactId>
+    <version>${jboss-as.version}</version>
+    <scope>provided</scope>
+</dependency>

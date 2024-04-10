@@ -1,35 +1,45 @@
-package com.redhat.coolstore.service;
+// Add the following to the top of the file
+import jakarta.annotation.Priority;
+import jakarta.ejb.ConcurrencyManagement;
+import jakarta.ejb.EJB;
+import jakarta.ejb.EntityBean;
+import jakarta.ejb.Singleton;
+import jakarta.inject.Inject;
+import jakarta.jms.JMSContext;
+import jakarta.jms.Topic;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.jms.Message;
+import reactor.jms.MessageListener;
+import reactor.jms.TopicSubscriber;
+import reactor.jms.TopicSubscription;
+import static com.redhat.coolstore.service.ShoppingCartOrderProcessor.class;
 
-import java.util.logging.Logger;
-import javax.ejb.Stateless;
-import javax.annotation.Resource;
-import javax.inject.Inject;
-import javax.jms.JMSContext;
-import javax.jms.Topic;
-
-import com.redhat.coolstore.model.ShoppingCart;
-import com.redhat.coolstore.utils.Transformers;
-
-@Stateless
-public class ShoppingCartOrderProcessor  {
+@Singleton
+@ConcurrencyManagement(ConcurrencyManagement.MBeanConcurrencyManagement.class)
+@EntityBean
+@Priority(10)
+public class ShoppingCartOrderProcessor {
 
     @Inject
-    Logger log;
-
+    private Logger log;
 
     @Inject
-    private transient JMSContext context;
+    private JMSContext context;
 
-    @Resource(lookup = "java:/topic/orders")
-    private Topic ordersTopic;
+    @Inject
+    @Channel("orders")
+    private Publisher<Message<String>> ordersTopic;
 
-    
-  
-    public void  process(ShoppingCart cart) {
+    @Inject
+    private Subscriber<String> subscriber;
+
+    public void process(ShoppingCart cart) {
         log.info("Sending order from processor: ");
-        context.createProducer().send(ordersTopic, Transformers.shoppingCartToJson(cart));
+        subscriber.onNext(Transformers.shoppingCartToJson(cart));
+        subscriber.onComplete();
     }
-
-
-
 }

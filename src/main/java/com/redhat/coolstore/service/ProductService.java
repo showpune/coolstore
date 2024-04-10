@@ -1,24 +1,24 @@
-package com.redhat.coolstore.service;
+// Add Quarkus annotations and dependencies here
+import io.quarkus.arc.Arc;
+import io.quarkus.hibernate.orm.PersistenceUnit;
+import org.hibernate.SessionFactory;
 
-import com.redhat.coolstore.model.CatalogItemEntity;
-import com.redhat.coolstore.model.Product;
-import com.redhat.coolstore.utils.Transformers;
-
-import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.redhat.coolstore.utils.Transformers.toProduct;
-
-@Stateless
+@ApplicationScoped
+@Transactional
 public class ProductService {
 
     @Inject
-    CatalogService cm;
+    private CatalogService cm;
 
-    public ProductService() {
-    }
+    @PersistenceContext
+    private EntityManager em;
 
     public List<Product> getProducts() {
         return cm.getCatalogItems().stream().map(entity -> toProduct(entity)).collect(Collectors.toList());
@@ -32,5 +32,4 @@ public class ProductService {
         // Return the entity
         return Transformers.toProduct(entity);
     }
-
 }

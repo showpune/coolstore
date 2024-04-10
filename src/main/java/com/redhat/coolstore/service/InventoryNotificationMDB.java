@@ -1,79 +1,90 @@
-package com.redhat.coolstore.service;
+// Update the InventoryNotificationMDB class as follows
 
-import com.redhat.coolstore.model.Order;
-import com.redhat.coolstore.utils.Transformers;
-
-import javax.inject.Inject;
-import javax.jms.*;
+import io.quarkus.arc.Arc;
+import io.quarkus.jms.client.MessageTopic;
+import io.quarkus.jms.client.ConnectionFactory;
+import io.quarkus.jms.client.Session;
+import io.quarkus.jms.client.Subscriber;
+import java.util.ArrayList;
+import java.util.List;
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.rmi.PortableRemoteObject;
-import java.util.Hashtable;
+import org.apache.activemq.artemis.api.core.SimpleString;
+import org.apache.activemq.artemis.core.server.ActiveMQServer;
+import org.jboss.logging.Logger;
+import com.redhat.coolstore.model.Order;
+import com.redhat.coolstore.model.Product;
+import com.redhat.coolstore.service.CatalogService;
+import com.redhat.coolstore.utils.Transformers;
+import io.quarkus.arc.Inject;
+import io.quarkus.runtime.annotations.QuarkusApplication;
+import io.quarkus.runtime.configuration.ConfigItem;
+import io.quarkus.runtime.configuration.ConfigItems;
+import io.quarkus.runtime.configuration.Configurers;
+import io.quarkus.runtime.configuration.FeatureConfig;
+import io.quarkus.runtime.configuration.ResourceConfig;
+import io.quarkus.runtime.configuration.ServerConfig;
+import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 
-public class InventoryNotificationMDB implements MessageListener {
+@QuarkusApplication(name = "coolstore-service", config = ConfigItems.SERVER_CONFIG + "/coolstore-service.yml")
+public class InventoryNotificationMDB {
 
-    private static final int LOW_THRESHOLD = 50;
+    private static final Logger log = Logger.getLogger(InventoryNotificationMDB.class);
 
     @Inject
     private CatalogService catalogService;
 
-    private final static String JNDI_FACTORY = "weblogic.jndi.WLInitialContextFactory";
-    private final static String JMS_FACTORY = "TCF";
-    private final static String TOPIC = "topic/orders";
-    private TopicConnection tcon;
-    private TopicSession tsession;
-    private TopicSubscriber tsubscriber;
+    @Inject
+    private Transformers transformers;
 
-    public void onMessage(Message rcvMessage) {
-        TextMessage msg;
-        {
-            try {
-                System.out.println("received message inventory");
-                if (rcvMessage instanceof TextMessage) {
-                    msg = (TextMessage) rcvMessage;
-                    String orderStr = msg.getBody(String.class);
-                    Order order = Transformers.jsonToOrder(orderStr);
-                    order.getItemList().forEach(orderItem -> {
-                        int old_quantity = catalogService.getCatalogItemById(orderItem.getProductId()).getInventory().getQuantity();
-                        int new_quantity = old_quantity - orderItem.getQuantity();
-                        if (new_quantity < LOW_THRESHOLD) {
-                            System.out.println("Inventory for item " + orderItem.getProductId() + " is below threshold (" + LOW_THRESHOLD + "), contact supplier!");
-                        } else {
-                            orderItem.setQuantity(new_quantity);
-                        }
-                    });
-                }
+    @Inject
+    private ActiveMQServer activeMQServer;
 
+    @Inject
+    private ConnectionFactory connectionFactory;
 
-            } catch (JMSException jmse) {
-                System.err.println("An exception occurred: " + jmse.getMessage());
+    @Inject
+    private Session session;
+
+    @Inject
+    private Subscriber subscriber;
+
+    @Inject
+    private MessageTopic<String> messageTopic;
+
+    public static void main(String[] args) {
+        Configurers.configure(InventoryNotificationMDB.class, ConfigItems.SERVER_CONFIG + "/coolstore-service.yml");
+    }
+
+    public void onMessage(String message) {
+        // Handle the message here
+        log.info("received message inventory");
+        List<Order> orders = transformers.jsonToOrder(message);
+        for (Order order : orders) {
+            int oldQuantity = catalogService.getCatalogItemById(order.getProductId()).getInventory().getQuantity();
+            int newQuantity = oldQuantity - order.getQuantity();
+            if (newQuantity < LOW_THRESHOLD) {
+                log.info("Inventory for item " + order.getProductId() + " is below threshold (" + LOW_THRESHOLD + "), contact supplier!");
+            } else {
+                order.setQuantity(newQuantity);
             }
         }
     }
 
-    public void init() throws NamingException, JMSException {
-        Context ctx = getInitialContext();
-        TopicConnectionFactory tconFactory = (TopicConnectionFactory) PortableRemoteObject.narrow(ctx.lookup(JMS_FACTORY), TopicConnectionFactory.class);
-        tcon = tconFactory.createTopicConnection();
-        tsession = tcon.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
-        Topic topic = (Topic) PortableRemoteObject.narrow(ctx.lookup(TOPIC), Topic.class);
-        tsubscriber = tsession.createSubscriber(topic);
-        tsubscriber.setMessageListener(this);
-        tcon.start();
+    public void init() {
+        Context ctx = new InitialContext();
+        ActiveMQConnectionFactory cf = new ActiveMQConnectionFactory(activeMQServer.getConnectorFactory());
+        connectionFactory = cf;
+        session = connectionFactory.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        subscriber = session.createSubscriber(messageTopic);
+        subscriber.setMessageListener(this);
+        messageTopic.setMessageListener(this::onMessage);
     }
 
-    public void close() throws JMSException {
-        tsubscriber.close();
-        tsession.close();
-        tcon.close();
-    }
-
-    private static InitialContext getInitialContext() throws NamingException {
-        Hashtable<String, String> env = new Hashtable<>();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, JNDI_FACTORY);
-        env.put(Context.PROVIDER_URL, "t3://localhost:7001");
-        env.put("weblogic.jndi.createIntermediateContexts", "true");
-        return new InitialContext(env);
+    public void close() {
+        subscriber.close();
+        session.close();
+        connectionFactory.close();
     }
 }

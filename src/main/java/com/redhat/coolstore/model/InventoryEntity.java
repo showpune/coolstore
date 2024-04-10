@@ -1,16 +1,12 @@
-package com.redhat.coolstore.model;
+// Add import statements for Quarkus
+import io.quarkus.hibernate.orm.PersistenceConfiguration;
+import org.hibernate.jpa.HibernatePersistenceProvider;
 
-import java.io.Serializable;
+// Update the package name
+package com.redhat.coolstore.model.jpa;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
-import javax.xml.bind.annotation.XmlRootElement;
-
+// Update the entity class
 @Entity
-@XmlRootElement
 @Table(name = "INVENTORY", uniqueConstraints = @UniqueConstraint(columnNames = "itemId"))
 public class InventoryEntity implements Serializable {
 

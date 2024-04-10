@@ -1,15 +1,15 @@
-package com.redhat.coolstore.utils;
+// Add the following at the top of the file
+import org.jboss.logging.Logger;
 
-import weblogic.application.ApplicationLifecycleEvent;
-import weblogic.application.ApplicationLifecycleListener;
+// Change the import statement on line 6
+import jakarta.inject.Inject;
 
-import javax.inject.Inject;
-import java.util.logging.Logger;
-
-public class StartupListener extends ApplicationLifecycleListener {
+// Update the class name to use the Quarkus naming convention
+@QuarkusApplicationListener(name = "com.redhat.coolstore.utils.StartupListener")
+public class StartupListener implements ApplicationLifecycleListener {
 
     @Inject
-    Logger log;
+    private Logger log;
 
     @Override
     public void postStart(ApplicationLifecycleEvent evt) {
@@ -20,5 +20,4 @@ public class StartupListener extends ApplicationLifecycleListener {
     public void preStop(ApplicationLifecycleEvent evt) {
         log.info("AppListener(preStop)");
     }
-
 }

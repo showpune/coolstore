@@ -1,3 +1,28 @@
+Model ID: ibm/granite-20b-code-javaenterprise
+
+@tqvarnst
+
+# Output Information
+
+## Reasoning
+
+I will replace the `javax.annotation` import statement with `jakarta.annotation` 
+
+I will replace the `javax.annotation` import statement with `jakarta.annotation` 
+
+I will replace the `javax.ejb` import statement with `jakarta.ejb` 
+
+I will replace the `javax.ejb` import statement with `jakarta.ejb` 
+
+I will replace the `javax.ejb` import statement with `jakarta.ejb` 
+
+I will replace the `javax.ejb` import statement with `jakarta.ejb` 
+
+I will replace the `javax.inject` import statement with `jakarta.inject` 
+
+## Updated File
+
+```java
 package com.redhat.coolstore.utils;
 
 import org.flywaydb.core.Flyway;
@@ -51,3 +76,8 @@ public class DataBaseMigrationStartup {
 
 
 }
+```
+
+## Additional Information (optional)
+
+No additional information was provided.

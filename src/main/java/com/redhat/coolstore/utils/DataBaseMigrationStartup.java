@@ -1,24 +1,21 @@
 package com.redhat.coolstore.utils;
 
-import org.flywaydb.core.Flyway;
-import org.flywaydb.core.api.FlywayException;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.ejb.TransactionManagement;
-import javax.ejb.TransactionManagementType;
-import javax.inject.Inject;
-import javax.sql.DataSource;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Resource;
+import jakarta.ejb.ConcurrencyManagement;
+import jakarta.ejb.ConcurrencyManagementType;
+import jakarta.ejb.Singleton;
+import jakarta.ejb.Startup;
+import jakarta.ejb.TransactionManagement;
+import jakarta.ejb.TransactionManagementType;
+import jakarta.inject.Inject;
+import jakarta.sql.DataSource;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Created by tqvarnst on 2017-04-04.
- */
 @Singleton
 @Startup
+@ConcurrencyManagement(ConcurrencyManagementType.CONTAINER)
 @TransactionManagement(TransactionManagementType.BEAN)
 public class DataBaseMigrationStartup {
 
